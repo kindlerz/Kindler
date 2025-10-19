@@ -20,14 +20,16 @@ from flask import (
 )
 from pathvalidate import sanitize_filename
 
-from kindler.search import FuzzySearcher
+from kindler.integration.metasearch import (
+    search_book_by_provider,
+    Provider,
+    get_book_details,
+)
 from kindler.util import is_blob_content
 
 gutenberg_au_bp = Blueprint("gutenberg_au", __name__, url_prefix="/gutenberg_au")
 
 allowed_formats = {"html", "epub", "mobi", "azw3"}
-
-searcher = FuzzySearcher()
 
 
 @gutenberg_au_bp.route("/")
@@ -39,7 +41,7 @@ def home():
 def search():
     # TODO - support multiple pages
     query = request.args.get("q")
-    books = searcher.search(query)
+    books = search_book_by_provider(Provider.GUTENBERG_AUSTRALIA, query)
     return render_template("result_gutenberg_au.html", query=query, results=books)
 
 
@@ -47,8 +49,10 @@ def search():
 @gutenberg_au_bp.route("/readability")
 def readability_page():
     query = request.args.get("q")
-    url = request.args.get("url")
     direct = request.args.get("direct")
+    book_id = request.args.get("id")
+    book_details = get_book_details(book_id)
+    url = book_details["htmlUrl"]
     if not url:
         logging.warning("URL is empty.")
         return redirect(url_for("error.error", status_code=400, url=url))
@@ -56,15 +60,13 @@ def readability_page():
     # and resolving rendering issues
     # Should be deleted once have more stability
     if not direct:
-        book = searcher.lookup_by_remote_url(url)
-        if not book:
-            return redirect(url_for("error.error", status_code=404))
         return render_template(
             "read_gutenberg_au.html",
-            title=book["title"],
-            author=book["author"],
-            summary=book["summary"],
             query=query,
+            title=book_details["title"],
+            author=book_details["author"],
+            summary=book_details["summary"],
+            id=book_id,
             url=url,
             direct=False,
         )
@@ -73,11 +75,12 @@ def readability_page():
             is_blob, req = is_blob_content(url)
             if is_blob:
                 return redirect(url)
-            article = get_python_readability_result(req.text, url)
+            article = get_python_readability_result(req.text, book_details, url)
             return render_template(
                 "read_gutenberg_au.html",
-                title=article["title"],
                 query=query,
+                title=article["title"],
+                id=id,
                 content=article["content"],
                 url=url,
                 direct=True,
@@ -95,15 +98,15 @@ def readability_page():
 
 @gutenberg_au_bp.route("/save_page")
 def save_page():
-    url = request.args.get("url")
+    book_id = request.args.get("id")
+    book_details = get_book_details(book_id)
+    url = book_details["htmlUrl"]
     save_format = request.args.get("format", "html")
-    if not url:
-        return "No URL provided", 400
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
     req = requests.get(url, timeout=10)
     if "html" == save_format:
-        article = get_python_readability_result(req.text, url, None)
+        article = get_python_readability_result(req.text, book_details, url, None)
         html_content = render_template(
             "read_save_formatted_gutenberg_au.html",
             title=article["title"],
@@ -118,7 +121,9 @@ def save_page():
     else:
         temp_dir = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
         os.makedirs(temp_dir, exist_ok=True)
-        article = get_python_readability_result(req.text, url, img_dir=temp_dir)
+        article = get_python_readability_result(
+            req.text, book_details, url, img_dir=temp_dir
+        )
         html_content = render_template(
             "read_save_formatted_gutenberg_au.html",
             title=article["title"],
@@ -176,20 +181,19 @@ def save_page():
             abort(500, f"Conversion failed: {e}")
 
 
-def get_python_readability_result(html_content, base_url, img_dir=None):
+def get_python_readability_result(html_content, book_details, base_url, img_dir=None):
     content, cover_image_path, title = remove_excessive_elements(
         html_content, base_url, img_dir
     )
-    book_entry = searcher.lookup_by_remote_url(base_url)
     if img_dir and not cover_image_path:
         cover_image_path = attempt_to_retrieve_google_books_image_as_book_cover(
-            book_entry, img_dir
+            book_details["coverImageUrl"], img_dir
         )
     return {
         "content": content,
         "title": title,
         "cover": cover_image_path,
-        "author": book_entry["author"],
+        "author": book_details["author"],
     }
 
 
@@ -298,20 +302,19 @@ def fix_by_keyword_on_ebook_generation(soup):
             break
 
 
-def attempt_to_retrieve_google_books_image_as_book_cover(book_entry, img_dir):
-    if not book_entry or not book_entry["image_google_book"]:
+def attempt_to_retrieve_google_books_image_as_book_cover(google_img_url, img_dir):
+    if not google_img_url:
         return None
-    img_url = book_entry["image_google_book"]
-    ext = os.path.splitext(img_url)[1] or ".jpg"
+    ext = os.path.splitext(google_img_url)[1] or ".jpg"
     local_filename = f"imggoogle{ext}"
     local_path = os.path.join(img_dir, local_filename)
     try:
-        img_request = requests.get(img_url, timeout=10)
+        img_request = requests.get(google_img_url, timeout=10)
         if img_request.status_code != 200:
             return None
         img_data = img_request.content
         with open(local_path, "wb") as f:
             f.write(img_data)
     except Exception as e:
-        logging.error(f"Failed to download {img_url}: {e}")
+        logging.error(f"Failed to download {google_img_url}: {e}")
     return local_path

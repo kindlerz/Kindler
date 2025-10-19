@@ -18,10 +18,10 @@
     <div class="source-info">
         <pre style="white-space: pre-wrap; word-wrap: break-word;">Original Source: <a href="{{ url }}">{{ url }}</a></pre>
         <p class="download-links">
-            <a href="{{ url_for('gutenberg_au.save_page', url=url, format='html') }}">[.html]</a>
-            <a href="{{ url_for('gutenberg_au.save_page', url=url, format='epub') }}">[.epub]</a>
-            <a href="{{ url_for('gutenberg_au.save_page', url=url, format='mobi') }}">[.mobi]</a>
-            <a href="{{ url_for('gutenberg_au.save_page', url=url, format='azw3') }}">[.azw3]</a>
+            <a href="{{ url_for('gutenberg_au.save_page', id=id, format='html') }}">[.html]</a>
+            <a href="{{ url_for('gutenberg_au.save_page', id=id, format='epub') }}">[.epub]</a>
+            <a href="{{ url_for('gutenberg_au.save_page', id=id, format='mobi') }}">[.mobi]</a>
+            <a href="{{ url_for('gutenberg_au.save_page', id=id, format='azw3') }}">[.azw3]</a>
         </p>
     </div>
     {% if direct %}
