@@ -19,16 +19,13 @@
         <tr>
             {% for result in results %}
             <td>
-                <a href="{{ url_for('gutenberg_au.readability_page', url=result['remote_url'], q=query) }}">
-                    {% if result['image_remote_location'] %}
-                        <img src="{{ result['image_remote_location'] }}" alt="{{ result['author'] }}">
-                        <small>{{ result['title'] }}</small>
-                    {% elif result['image_google_book'] %}
-                        <img src="{{ result['image_google_book'] }}" alt="{{ result['author'] }}">
-                        <small>{{ result['title'] }}</small>
-                    {% else %}
-                        <small>{{ result['title'] }}</small>
+                <a href="{{ url_for('gutenberg_au.readability_page', id=result['id'], q=query) }}">
+                    {% if result['coverImageUrl'] %}
+                        <img src="{{ result['coverImageUrl'] }}" alt="{{ result['title'] }}">
                         <small>{{ result['author'] }}</small>
+                    {% else %}
+                        <small>{{ result['author'] }}</small>
+                        <small>{{ result['title'] }}</small>
                     {% endif %}
                 </a>
             </td>

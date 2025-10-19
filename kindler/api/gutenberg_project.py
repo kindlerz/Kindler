@@ -2,10 +2,9 @@ import requests
 import logging
 from flask import render_template, Blueprint, request
 
-gutenberg_bp = Blueprint("gutenberg", __name__, url_prefix="/gutenberg")
+from kindler.config import GUTENDEX_THIRD_PARTY_URL, GUTENDEX_SELF_HOST_URL
 
-third_party_gutendex_base_url = "https://gutendex.com/books/"
-self_hosted_gutendex_base_url = "http://gutendex:9193/books/"
+gutenberg_bp = Blueprint("gutenberg", __name__, url_prefix="/gutenberg")
 
 
 @gutenberg_bp.route("/")
@@ -33,7 +32,7 @@ def readability_page():
 def search_book_from_gutendex_api(query):
     try:
         response = requests.get(
-            self_hosted_gutendex_base_url, params={"search": query}, timeout=5
+            GUTENDEX_SELF_HOST_URL, params={"search": query}, timeout=5
         )
         logging.info(f"Successfully called self-hosted Gutendex for: '{query}' keyword")
         return response
@@ -42,13 +41,13 @@ def search_book_from_gutendex_api(query):
             f"Failed to call self-hosted Gutendex for: '{query}' keyword. Trying third-party now"
         )
         return requests.get(
-            third_party_gutendex_base_url, params={"search": query}, timeout=5
+            GUTENDEX_THIRD_PARTY_URL, params={"search": query}, timeout=5
         )
 
 
 def retrieve_book_details_by_id_from_gutendex_api(book_id):
     try:
-        response = requests.get(f"{self_hosted_gutendex_base_url}{book_id}", timeout=5)
+        response = requests.get(f"{GUTENDEX_SELF_HOST_URL}{book_id}", timeout=5)
         logging.info(
             f"Successfully called self-hosted Gutendex to retrieve book details of book_id: '{book_id}'"
         )
@@ -57,4 +56,4 @@ def retrieve_book_details_by_id_from_gutendex_api(book_id):
         logging.info(
             f"Failed to call self-hosted Gutendex to retrieve book details of book_id: '{book_id}'. Trying third-party now"
         )
-        return requests.get(f"{third_party_gutendex_base_url}{book_id}", timeout=5)
+        return requests.get(f"{GUTENDEX_THIRD_PARTY_URL}{book_id}", timeout=5)
