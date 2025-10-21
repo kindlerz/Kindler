@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="top-nav">
-        <a href="{{ url_for('news.home') }}">Home</a>
+        <a href="{{ url_for('home.home') }}">Home</a>
         <form action="{{ url_for('news.search') }}" method="get">
             <select class="drop-down" id="news-category" name="news-category">
                 {% set options = [('top', 'World Top News'), ('usa-en', 'USA'),
