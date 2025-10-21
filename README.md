@@ -1,7 +1,7 @@
 # 📚 Kindler  
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/kasramp/kindler.svg)](https://hub.docker.com/repository/docker/kasramp/kindler/general)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/kindlerz/kindler/ci.yml?branch=main)](https://github.com/kindlerz/kindler/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/kindlerz/kindler/build_and_deploy.yml?branch=master)](https://github.com/kindlerz/kindler/actions)
 [![License](https://img.shields.io/github/license/kindlerz/kindler)](LICENSE)
 
 > 🖋️ *Web surfing and reading reimagined for e-ink devices.*
