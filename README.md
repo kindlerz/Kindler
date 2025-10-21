@@ -1,8 +1,22 @@
-# Kindle Utils
+# 📚 Kindler  
 
-Kindle as a productivity hub. Utilities to act as proxy to render on Kindle basic browser.
+[![Docker Pulls](https://img.shields.io/docker/pulls/kasramp/kindler.svg)](https://hub.docker.com/repository/docker/kasramp/kindler/general)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/kindlerz/kindler/ci.yml?branch=main)](https://github.com/kindlerz/kindler/actions)
+[![License](https://img.shields.io/github/license/kindlerz/kindler)](LICENSE)
 
-## Virtual env
+> 🖋️ *Web surfing and reading reimagined for e-ink devices.*
+
+Kindler is a lightweight, open-source web app built to make e-ink devices like Kindles actually useful on the modern web. Browse the internet, read news, or explore public-domain books, all through a clean, no JavaScript interface that works even on the most limited browsers.
+
+Built with **Python (Flask + Jinja2)**, **Redis**, and **Calibre**, Kindler lets you instantly convert any webpage, news article, or Gemini capsule into **EPUB**, **MOBI**, or **AZW3**. The project is fully containerized and **Docker Swarm–ready**. It depends on a Java-based [Metasearch](https://github.com/kindlerz/metasearch) backend for federated search across public-domain libraries.
+
+🐳 **Docker Hub:** [kasramp/kindler](https://hub.docker.com/repository/docker/kasramp/kindler/general)  
+🌍 **Live Demo:** [kindler.ink](https://kindler.ink)  
+💻 **Org:** [github.com/kindlerz](https://github.com/kindlerz)
+
+## Development set up
+
+### Virtual env
 
 If it does not exist, create one:
 
@@ -40,7 +54,7 @@ $ pip3 install -r requirements.txt
 
 The project is dependent on Redis. Make sure to have it available.
 
-### Development
+### Local development
 
 For local development, before running the project, bring up the Redis from `docker-compose.yml` file:
 
@@ -56,6 +70,8 @@ $ python -m kindler.app
 
 ### Production (Gunicorn WSGI)
 
+Make sure you also deploy [Metasearch](https://github.com/kindlerz/metasearch), without it, Kindler public-domain libraries do not work.
+
 Ensure the Redis cluster is up and running. Then set the below env var:
 
 ```bash
@@ -70,9 +86,7 @@ $ gunicorn kindler.wsgi:app
 
 To support generating epub, mobi, azw3 of pages on the fly, need to install calibre, or more specific `ebook-convert` as it's invoked as a sub process to generate ebooks.
 
-The usage of `aspose-words` library is remove as it not only left a notice that the library is not paid for but also wouldn't convert more than 20 pages. So it was too annoying to work with.
-
-## Docker build
+## Building with Docker
 
 Run:
 
@@ -92,9 +106,9 @@ Test an image from Docker Hub:
 $ docker run -p 8181:8181 kasramp/kindler:v0.0.2
 ```
 
-## Formatting
+## Code formatting
 
-Run:
+Before committing or sending any PR to review, make sure the code is formatted correctly. You can run `black`:
 
 ```bash
 $ black --check .
