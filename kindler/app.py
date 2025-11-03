@@ -12,6 +12,7 @@ from kindler.api.home import home_bp
 from kindler.api.news import news_bp
 from kindler.api.standard_ebooks import standard_ebooks_bp
 from kindler.api.web import web_bp
+from kindler.api.wikipedia import wikipedia_bp
 from kindler.cache import cache, CACHE_CONFIG
 
 
@@ -60,6 +61,7 @@ app.register_blueprint(news_bp)
 app.register_blueprint(gutenberg_bp)
 app.register_blueprint(gutenberg_au_bp)
 app.register_blueprint(standard_ebooks_bp)
+app.register_blueprint(wikipedia_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(error_bp)
 app.register_blueprint(healthz, url_prefix="/healthz")
