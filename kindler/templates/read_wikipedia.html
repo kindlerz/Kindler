@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="{{ url_for('home.home') }}">Home</a>
+        <form action="{{ url_for('wikipedia.search') }}" method="get">
+            <input type="text" id="q" name="q" value="{{ query }}">
+            <input type="submit" value="Search">
+        </form>
+    </div>
+    <hr>
+    {% if content %}
+    <div class="source-info">
+        <pre style="white-space: pre-wrap; word-wrap: break-word;">Original Source: <a href="{{ url }}">{{ url }}</a></pre>
+        <p class="download-links">
+            <a href="{{ url_for('wikipedia.save_page', format='html', q=query) }}">[.html]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='epub', q=query) }}">[.epub]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='mobi', q=query) }}">[.mobi]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='azw3', q=query) }}">[.azw3]</a>
+        </p>
+    </div>
+    {% endif %}
+    <div class="content">
+        <h1>{{ title }}</h1>
+        {{ content | safe }}
+    </div>
+</body>
+</html>
