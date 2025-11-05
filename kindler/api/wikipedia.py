@@ -2,7 +2,6 @@ import logging
 import os
 import subprocess
 import tempfile
-import uuid
 
 import requests
 import wikipediaapi
@@ -152,37 +151,14 @@ def download_cover_image(query):
     url = "https://en.wikipedia.org/w/api.php"
     params = {
         "action": "query",
-        "format": "json",
-        "formatversion": 2,
-        "prop": "pageimages",
-        "piprop": "original",
         "titles": query,
+        "format": "json",
+        "pithumbsize": 1000,
+        "prop": "pageimages|pageterms",
+        "piprop": "thumbnail",
+        "redirects": 1,
     }
-    resp = requests.get(url, params=params, headers=USER_AGENT_HEADER)
-    data = resp.json()
-    pages = data.get("query", {}).get("pages", [])
-    if pages and "original" in pages[0]:
-        image_url = pages[0]["original"]["source"]
-        return save_cover_image_to_disk(image_url)
-    else:
-        return None
-
-
-def save_cover_image_to_disk(image_url):
-    if not image_url:
-        return None
-    temp_dir = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
-    os.makedirs(temp_dir, exist_ok=True)
-    ext = os.path.splitext(image_url)[1] or ".jpg"
-    local_filename = f"imgwiki{ext}"
-    image_path = os.path.join(temp_dir, local_filename)
-    try:
-        img_request = requests.get(image_url, timeout=10)
-        if img_request.status_code != 200:
-            return None
-        img_data = img_request.content
-        with open(image_path, "wb") as f:
-            f.write(img_data)
-    except Exception as e:
-        logging.error(f"Failed to download {image_url}: {e}")
-    return image_path
+    data = requests.get(url, params=params, headers=USER_AGENT_HEADER).json()
+    pages = data.get("query", {}).get("pages", {})
+    page = next(iter(pages.values()), {})
+    return page.get("thumbnail", {}).get("source")
