@@ -3,6 +3,7 @@ import os
 import subprocess
 import tempfile
 
+import requests
 import wikipediaapi
 from flask import redirect, url_for
 from flask import render_template, Blueprint, request, Response, send_file, abort
@@ -10,8 +11,12 @@ from pathvalidate import sanitize_filename
 
 wikipedia_bp = Blueprint("wikipedia", __name__, url_prefix="/wikipedia")
 
+USER_AGENT_NAME = "Kindler (kasra@madadipouya.com)"
+
+USER_AGENT_HEADER = {"User-Agent": USER_AGENT_NAME}
+
 wiki = wikipediaapi.Wikipedia(
-    user_agent="Kindler (kasra@madadipouya.com)",
+    user_agent=USER_AGENT_NAME,
     language="en",
     extract_format=wikipediaapi.ExtractFormat.HTML,
 )
@@ -52,7 +57,7 @@ def save_page():
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
 
-    article = get_wikipedia_article(query)
+    article = get_wikipedia_article_with_cover_image(query)
     html_content = render_template(
         "read_save_formatted.html",
         title=article["title"],
@@ -76,22 +81,25 @@ def save_page():
         ) as output_tmp:
             output_file = output_tmp.name
         try:
+            cmd = [
+                "ebook-convert",
+                input_html_file,
+                output_file,
+                "--title",
+                article["title"],
+                "--authors",
+                "Wikipedia",
+                "--chapter",
+                "//h2",
+                "--level1-toc",
+                "//h1",
+                "--chapter-mark",
+                "pagebreak",
+            ]
+            if article["cover"]:
+                cmd.extend(["--cover", article["cover"]])
             subprocess.run(
-                [
-                    "ebook-convert",
-                    input_html_file,
-                    output_file,
-                    "--title",
-                    article["title"],
-                    "--authors",
-                    "Wikipedia",
-                    "--chapter",
-                    "//h2",
-                    "--level1-toc",
-                    "//h1",
-                    "--chapter-mark",
-                    "pagebreak",
-                ],
+                cmd,
                 check=True,
             )
             download_file_name = sanitize_filename(f"{article['title']}.{save_format}")
@@ -116,6 +124,12 @@ def save_page():
             abort(500, f"Conversion failed: {e}")
 
 
+def get_wikipedia_article_with_cover_image(query):
+    article = get_wikipedia_article(query)
+    article["cover"] = download_cover_image(query)
+    return article
+
+
 def get_wikipedia_article(query):
     article = {}
     result = wiki.page(query)
@@ -131,3 +145,20 @@ def get_wikipedia_article(query):
     article["title"] = result.title
     article["url"] = result.fullurl
     return article
+
+
+def download_cover_image(query):
+    url = "https://en.wikipedia.org/w/api.php"
+    params = {
+        "action": "query",
+        "titles": query,
+        "format": "json",
+        "pithumbsize": 1000,
+        "prop": "pageimages|pageterms",
+        "piprop": "thumbnail",
+        "redirects": 1,
+    }
+    data = requests.get(url, params=params, headers=USER_AGENT_HEADER).json()
+    pages = data.get("query", {}).get("pages", {})
+    page = next(iter(pages.values()), {})
+    return page.get("thumbnail", {}).get("source")
