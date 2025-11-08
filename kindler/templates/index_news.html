@@ -12,8 +12,8 @@
 <form action="{{ url_for('news.search') }}" method="get">
     <select class="drop-down" id="news-category" name="news-category">
         {% set options = [('top', 'World Top News'), ('usa-en', 'USA'),
-        ('germany-en', 'Germany (EN)'), ('germany-de', 'Germany (DE)'),
-        ('technology', 'Technology'), ('business','Business')] %}
+        ('germany-de', 'Germany (DE)'), ('technology', 'Technology'),
+        ('business','Business')] %}
         {% for value, label in options %}
             <option value="{{ value }}">
                 {{ label }}
