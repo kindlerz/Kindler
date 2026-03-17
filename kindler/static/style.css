@@ -95,6 +95,16 @@ code pre {
     padding: 0.7em;
 }
 
+.content pre {
+    white-space: pre;
+    font-family: monospace;
+    font-size: 1em;
+    background-color: #e8e8e8;
+    border: 1px solid #dcdcdc;
+    padding: 0.7em;
+    overflow: auto;
+}
+
 .drop-down {
   width: 50%;
   font-size: 1.2em;
