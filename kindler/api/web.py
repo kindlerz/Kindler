@@ -172,10 +172,9 @@ def clean_readability_html(html_content, base_url, query, only_links_rewrite=Fal
 
     rewrite_links(soup, base_url, query)
     remove_images(soup)
+    normalize_pre_blocks(soup)
     if only_links_rewrite:
-        return "\n".join(
-            line.strip() for line in str(soup).splitlines() if line.strip()
-        )
+        return clean_output(str(soup))
 
     # --- Drop navigation/menus explicitly ---
     for nav in soup.find_all("nav"):
@@ -248,7 +247,7 @@ def clean_readability_html(html_content, base_url, query, only_links_rewrite=Fal
         tag.decompose()
 
     # --- Return cleaned HTML ---
-    return "\n".join(line.strip() for line in str(soup).splitlines() if line.strip())
+    return clean_output(str(soup))
 
 
 def rewrite_links(soup, base_url, query):
@@ -287,3 +286,38 @@ def remove_images(soup):
         ]
     ):
         tag.decompose()
+
+
+def normalize_pre_blocks(soup):
+    for pre in soup.find_all("pre"):
+        code_tag = pre.find("code")
+        if not code_tag:
+            continue
+        code_text = code_tag.get_text()
+        if not code_text.strip():
+            continue
+        pre.clear()
+        pre.string = code_text
+        for code in pre.find_all("code"):
+            code.unwrap()
+        pre["style"] = "font-family:monospace; margin-left:0;"
+    return soup
+
+
+def clean_output(html):
+    lines = html.splitlines()
+    result = []
+    in_pre = False
+    for line in lines:
+        if "<pre" in line:
+            in_pre = True
+
+        if in_pre:
+            result.append(line)  # preserve EXACTLY
+        else:
+            if line.strip():
+                result.append(line.strip())
+
+        if "</pre>" in line:
+            in_pre = False
+    return "\n".join(result)
