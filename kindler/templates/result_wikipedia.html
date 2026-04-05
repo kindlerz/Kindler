@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Search Results</title>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="{{ url_for('home.home') }}">Home</a>
+        <form action="{{ url_for('wikipedia.search') }}" method="get">
+            <input type="text" id="q" name="q" value="{{ query }}">
+            <input type="submit" value="Search">
+        </form>
+    </div>
+    <hr>
+    {% for result in results %}
+        <div class="content">
+            <b><a href="{{ url_for('wikipedia.readability_page', url=result['href'], q=query) }}">
+                {{ result['title'] }}
+            </a></b><br>
+            <small class="truncated-url">{{ result['href'] }}</small><br>
+            {{ result['body'] }}
+        </div>
+        <hr>
+    {% endfor %}
+</body>
+</html>
