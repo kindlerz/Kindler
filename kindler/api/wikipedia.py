@@ -2,7 +2,10 @@ import logging
 import os
 import subprocess
 import tempfile
-
+import re
+import textwrap
+from markitdown import MarkItDown
+import io
 import requests
 import wikipediaapi
 from flask import redirect, url_for
@@ -21,7 +24,9 @@ wiki = wikipediaapi.Wikipedia(
     extract_format=wikipediaapi.ExtractFormat.HTML,
 )
 
-allowed_formats = {"html", "epub", "mobi", "azw3"}
+allowed_formats = {"html", "txt", "md", "epub", "mobi", "azw3"}
+
+md = MarkItDown(enable_plugins=False)
 
 
 @wikipedia_bp.route("/")
@@ -38,7 +43,7 @@ def search():
 @wikipedia_bp.route("/readability")
 def readability_page():
     query = request.args.get("q")
-    article = get_wikipedia_article(query)
+    article = get_wikipedia_article(query, False)
     return render_template(
         "read_wikipedia.html",
         query=query,
@@ -57,7 +62,8 @@ def save_page():
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
 
-    article = get_wikipedia_article_with_cover_image(query)
+    keep_original_links = "txt" == save_format or "md" == save_format
+    article = get_wikipedia_article_with_cover_image(query, keep_original_links)
     html_content = render_template(
         "read_save_formatted.html",
         title=article["title"],
@@ -68,6 +74,20 @@ def save_page():
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
             f"attachment; filename={sanitize_filename(article['title'] + '.html')}"
+        )
+        return response
+    elif "txt" == save_format:
+        text_content = markdown_to_text(extract_markdown(article["content"]))
+        response = Response(text_content, mimetype="text/plain")
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={sanitize_filename(article['title'] + '.txt')}"
+        )
+        return response
+    elif "md" == save_format:
+        markdown_content = extract_markdown(article["content"])
+        response = Response(markdown_content, mimetype="text/plain")
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={sanitize_filename(article['title'] + '.md')}"
         )
         return response
     else:
@@ -124,23 +144,30 @@ def save_page():
             abort(500, f"Conversion failed: {e}")
 
 
-def get_wikipedia_article_with_cover_image(query):
-    article = get_wikipedia_article(query)
+def get_wikipedia_article_with_cover_image(query, keep_original_links):
+    article = get_wikipedia_article(query, keep_original_links)
     article["cover"] = download_cover_image(query)
     return article
 
 
-def get_wikipedia_article(query):
+def get_wikipedia_article(query, keep_original_links):
     article = {}
     result = wiki.page(query)
     links = result.links
     content = result.text
     for title in links.keys():
-        content = content.replace(
-            title,
-            f"<a href={url_for("wikipedia.readability_page", q=title)}>{title}</a>",
-            1,
-        )
+        if keep_original_links:
+            content = content.replace(
+                title,
+                f"<a href='http://wikipedia.org/wiki/{title}'>{title}</a>",
+                1,
+            )
+        else:
+            content = content.replace(
+                title,
+                f"<a href={url_for("wikipedia.readability_page", q=title)}>{title}</a>",
+                1,
+            )
     article["content"] = content
     article["title"] = result.title
     article["url"] = result.fullurl
@@ -162,3 +189,72 @@ def download_cover_image(query):
     pages = data.get("query", {}).get("pages", {})
     page = next(iter(pages.values()), {})
     return page.get("thumbnail", {}).get("source")
+
+
+def extract_markdown(html):
+    return md.convert(io.BytesIO(html.encode("utf-8"))).text_content
+
+
+def markdown_to_text(md, width=80, max_empty_lines=1):
+    lines = md.splitlines()
+    output = []
+    list_stack = []
+    in_code_block = False
+    empty_count = 0  # track consecutive empty lines
+
+    for line in lines:
+        line = line.rstrip()
+
+        # --- Handle code blocks ---
+        if line.startswith("```"):
+            in_code_block = not in_code_block
+            if in_code_block:
+                output.append("[code block]")
+            continue
+        if in_code_block:
+            continue  # skip code content
+
+        # --- Strip Markdown links ---
+        line = re.sub(r"\[(.*?)\]\((.*?)\)", r"\1", line)
+
+        # --- Headers ---
+        header_match = re.match(r"^(#{1,6})\s*(.*)", line)
+        if header_match:
+            level, text = header_match.groups()
+            text = text.strip().upper()
+            if output and output[-1] != "":
+                output.append("")  # ensure blank line before header
+            output.append(text)
+            output.append("=" * len(text))
+            empty_count = 0
+            continue
+
+        # --- Lists (unordered + ordered) ---
+        list_match = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)", line)
+        if list_match:
+            indent, marker, content = list_match.groups()
+            level = len(indent) // 2
+            bullet = "- "
+            prefix = "  " * level + bullet
+            wrapped = textwrap.fill(
+                content,
+                width=width,
+                initial_indent=prefix,
+                subsequent_indent="  " * (level + 1),
+            )
+            output.append(wrapped)
+            empty_count = 0
+            continue
+
+        # --- Normal paragraph lines ---
+        if line.strip():
+            wrapped = textwrap.fill(line, width=width)
+            output.append(wrapped)
+            empty_count = 0
+        else:
+            # Handle empty lines
+            empty_count += 1
+            if empty_count <= max_empty_lines:
+                output.append("")
+
+    return "\n".join(output).strip()
