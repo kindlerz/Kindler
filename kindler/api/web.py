@@ -3,6 +3,9 @@ import os
 import subprocess
 import tempfile
 from urllib.parse import urljoin, urlparse, quote
+from html_to_markdown import convert
+import re
+import textwrap
 
 import requests
 from bs4 import BeautifulSoup
@@ -25,7 +28,7 @@ HEADERS = {
     "DNT": "1",
 }
 
-allowed_formats = {"html", "epub", "mobi", "azw3"}
+allowed_formats = {"html", "txt", "md", "epub", "mobi", "azw3"}
 
 
 @web_bp.route("/")
@@ -56,15 +59,16 @@ def readability_page():
         if is_blob:
             return redirect(url)
         if alternative_renderer:
-            article = get_js_readability_result(req.text, url, query)
+            article = get_js_readability_result(req.text, url, query, False)
         else:
-            article = get_python_readability_result(req.text, url, query)
+            article = get_python_readability_result(req.text, url, query, False)
         return render_template(
             "read_web.html",
             title=article["title"],
             query=query,
             content=article["content"],
             url=url,
+            alternative_renderer=alternative_renderer,
         )
 
     except requests.exceptions.RequestException as e:
@@ -82,6 +86,7 @@ def readability_page():
 def save_page():
     url = request.args.get("url")
     query = request.args.get("q")
+    alternative_renderer = request.args.get("alternative_renderer")
     save_format = request.args.get("format", "html")
     if not url:
         return "No URL provided", 400
@@ -89,7 +94,13 @@ def save_page():
         abort(400, "Invalid format")
 
     req = requests.get(url, headers=HEADERS, timeout=10)
-    article = get_python_readability_result(req.text, url, query)
+    keep_original_links = "txt" == save_format or "md" == save_format
+    if alternative_renderer:
+        article = get_js_readability_result(req.text, url, query, keep_original_links)
+    else:
+        article = get_python_readability_result(
+            req.text, url, query, keep_original_links
+        )
     html_content = render_template(
         "read_save_formatted.html",
         title=article["title"],
@@ -100,6 +111,20 @@ def save_page():
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
             f"attachment; filename={sanitize_filename(article['title'] + '.html')}"
+        )
+        return response
+    elif "txt" == save_format:
+        text_content = markdown_to_text(extract_markdown(article["content"]))
+        response = Response(text_content, mimetype="text/plain")
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={sanitize_filename(article['title'] + '.txt')}"
+        )
+        return response
+    elif "md" == save_format:
+        markdown_content = extract_markdown(article["content"])
+        response = Response(markdown_content, mimetype="text/plain")
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={sanitize_filename(article['title'] + '.md')}"
         )
         return response
     else:
@@ -151,26 +176,35 @@ def save_page():
             abort(500, f"Conversion failed: {e}")
 
 
-def get_python_readability_result(html_content, base_url, query):
+def get_python_readability_result(html_content, base_url, query, keep_original_links):
     doc = Document(html_content)
     return {
-        "content": clean_readability_html(doc.summary(), base_url, query, True),
+        "content": clean_readability_html(
+            doc.summary(), base_url, query, True, keep_original_links
+        ),
         "title": doc.short_title(),
     }
 
 
-def get_js_readability_result(html_content, base_url, query):
+def get_js_readability_result(html_content, base_url, query, keep_original_links):
     article = simple_json_from_html_string(html_content, use_readability=True)
     return {
-        "content": clean_readability_html(article["content"], base_url, query),
+        "content": clean_readability_html(
+            article["content"], base_url, query, keep_original_links
+        ),
         "title": article["title"],
     }
 
 
-def clean_readability_html(html_content, base_url, query, only_links_rewrite=False):
+def clean_readability_html(
+    html_content, base_url, query, only_links_rewrite=False, keep_original_links=False
+):
     soup = BeautifulSoup(html_content, "html.parser")
 
-    rewrite_links(soup, base_url, query)
+    if keep_original_links:
+        rewrite_original_links_to_absolute_links(soup, base_url)
+    else:
+        rewrite_links(soup, base_url, query)
     remove_images(soup)
     normalize_pre_blocks(soup)
     if only_links_rewrite:
@@ -266,6 +300,18 @@ def rewrite_links(soup, base_url, query):
         link["href"] = f"{readability_endpoint}{encoded}"
 
 
+def rewrite_original_links_to_absolute_links(soup, base_url):
+    for link in soup.find_all("a", href=True):
+        href = link["href"]
+        if href.startswith("#"):
+            link.decompose()
+            continue
+        absolute_url = urljoin(base_url, href)
+        if urlparse(absolute_url).scheme not in ("http", "https"):
+            continue
+        link["href"] = absolute_url
+
+
 def remove_images(soup):
     # --- Remove unhelpful tags (media, scripts, forms, etc.) ---
     for tag in soup.find_all(
@@ -321,3 +367,72 @@ def clean_output(html):
         if "</pre>" in line:
             in_pre = False
     return "\n".join(result)
+
+
+def extract_markdown(html):
+    return convert(html)["content"]
+
+
+def markdown_to_text(md, width=80, max_empty_lines=1):
+    lines = md.splitlines()
+    output = []
+    list_stack = []
+    in_code_block = False
+    empty_count = 0  # track consecutive empty lines
+
+    for line in lines:
+        line = line.rstrip()
+
+        # --- Handle code blocks ---
+        if line.startswith("```"):
+            in_code_block = not in_code_block
+            if in_code_block:
+                output.append("[code block]")
+            continue
+        if in_code_block:
+            continue  # skip code content
+
+        # --- Strip Markdown links ---
+        line = re.sub(r"\[(.*?)\]\((.*?)\)", r"\1", line)
+
+        # --- Headers ---
+        header_match = re.match(r"^(#{1,6})\s*(.*)", line)
+        if header_match:
+            level, text = header_match.groups()
+            text = text.strip().upper()
+            if output and output[-1] != "":
+                output.append("")  # ensure blank line before header
+            output.append(text)
+            output.append("=" * len(text))
+            empty_count = 0
+            continue
+
+        # --- Lists (unordered + ordered) ---
+        list_match = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)", line)
+        if list_match:
+            indent, marker, content = list_match.groups()
+            level = len(indent) // 2
+            bullet = "- "
+            prefix = "  " * level + bullet
+            wrapped = textwrap.fill(
+                content,
+                width=width,
+                initial_indent=prefix,
+                subsequent_indent="  " * (level + 1),
+            )
+            output.append(wrapped)
+            empty_count = 0
+            continue
+
+        # --- Normal paragraph lines ---
+        if line.strip():
+            wrapped = textwrap.fill(line, width=width)
+            output.append(wrapped)
+            empty_count = 0
+        else:
+            # Handle empty lines
+            empty_count += 1
+            if empty_count <= max_empty_lines:
+                output.append("")
+
+    return "\n".join(output).strip()
