@@ -3,10 +3,10 @@ import os
 import subprocess
 import tempfile
 from urllib.parse import urljoin, urlparse, quote
-from html_to_markdown import convert
+from markitdown import MarkItDown
 import re
 import textwrap
-
+import io
 import requests
 from bs4 import BeautifulSoup
 from ddgs import DDGS
@@ -29,6 +29,8 @@ HEADERS = {
 }
 
 allowed_formats = {"html", "txt", "md", "epub", "mobi", "azw3"}
+
+md = MarkItDown(enable_plugins=False)
 
 
 @web_bp.route("/")
@@ -370,7 +372,7 @@ def clean_output(html):
 
 
 def extract_markdown(html):
-    return convert(html)["content"]
+    return md.convert(io.BytesIO(html.encode("utf-8"))).text_content
 
 
 def markdown_to_text(md, width=80, max_empty_lines=1):
