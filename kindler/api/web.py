@@ -44,7 +44,7 @@ def search():
     if not query:
         logging.warning("Search query is empty.")
         return "Please provide a search query.", 400
-    results = DDGS().text(query, max_results=100, backend="duckduckgo")
+    results = DDGS().text(query, max_results=100, backend=["duckduckgo"])
     return render_template("result_web.html", query=query, results=results)
 
 

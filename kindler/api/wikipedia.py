@@ -4,6 +4,8 @@ import subprocess
 import tempfile
 import re
 import textwrap
+
+from ddgs import DDGS
 from markitdown import MarkItDown
 import io
 import requests
@@ -37,13 +39,24 @@ def home():
 @wikipedia_bp.route("/search")
 def search():
     query = request.args.get("q")
-    return redirect(url_for("wikipedia.readability_page", q=query))
+    if not query:
+        logging.warning("Search query is empty.")
+        return "Please provide a search query.", 400
+    if has_wikipedia_article(query):
+        return redirect(url_for("wikipedia.readability_page", q=query))
+    else:
+        results = DDGS().text(query, max_results=100, backend=["wikipedia"])
+        return render_template("result_wikipedia.html", query=query, results=results)
 
 
 @wikipedia_bp.route("/readability")
 def readability_page():
     query = request.args.get("q")
-    article = get_wikipedia_article(query, False)
+    url = request.args.get("url")
+    if url:
+        article = get_wikipedia_article(url.split("/")[-1], False)
+    else:
+        article = get_wikipedia_article(query, False)
     return render_template(
         "read_wikipedia.html",
         query=query,
@@ -174,6 +187,11 @@ def get_wikipedia_article(query, keep_original_links):
     article["title"] = result.title
     article["url"] = result.fullurl
     return article
+
+
+def has_wikipedia_article(query):
+    result = wiki.page(query)
+    return bool(result.links)
 
 
 def download_cover_image(query):
