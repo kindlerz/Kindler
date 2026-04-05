@@ -21,7 +21,6 @@ flatbuffers==25.12.19
 gnews==0.4.2
 googlenewsdecoder==0.1.7
 gunicorn==23.0.0
-html-to-markdown==3.1.0
 html5lib==1.1
 idna==3.10
 ignition==0.3
