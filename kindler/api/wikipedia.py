@@ -69,14 +69,17 @@ def readability_page():
 @wikipedia_bp.route("/save_page")
 def save_page():
     query = request.args.get("q")
+    url = request.args.get("url")
     save_format = request.args.get("format", "html")
-    if not query:
+    if not query and not url:
         return "No page is provided", 400
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
 
     keep_original_links = "txt" == save_format or "md" == save_format
-    article = get_wikipedia_article_with_cover_image(query, keep_original_links)
+    article = get_wikipedia_article_with_cover_image(
+        url.split("/")[-1], keep_original_links
+    )
     html_content = render_template(
         "read_save_formatted.html",
         title=article["title"],
