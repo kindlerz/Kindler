@@ -77,14 +77,16 @@ def save_page():
         )
         return response
     elif "txt" == save_format:
-        text_content = markdown_to_text(extract_markdown(article["content"]))
+        content = f"<h1>{article['title']}</h1>" + article["content"]
+        text_content = markdown_to_text(extract_markdown(content))
         response = Response(text_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
             f"attachment; filename={sanitize_filename(article['title'] + '.txt')}"
         )
         return response
     elif "md" == save_format:
-        markdown_content = extract_markdown(article["content"])
+        content = f"<h1>{article['title']}</h1>" + article["content"]
+        markdown_content = extract_markdown(content)
         response = Response(markdown_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
             f"attachment; filename={sanitize_filename(article['title'] + '.md')}"
