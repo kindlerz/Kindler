@@ -19,12 +19,12 @@
     <div class="source-info">
         <pre style="white-space: pre-wrap; word-wrap: break-word;">Original Source: <a href="{{ url }}">{{ url }}</a></pre>
         <p class="download-links">
-            <a href="{{ url_for('wikipedia.save_page', format='html', q=query) }}">[.html]</a>
-            <a href="{{ url_for('wikipedia.save_page', format='txt', q=query) }}">[.txt]</a>
-            <a href="{{ url_for('wikipedia.save_page', format='md', q=query) }}">[.md]</a>
-            <a href="{{ url_for('wikipedia.save_page', format='epub', q=query) }}">[.epub]</a>
-            <a href="{{ url_for('wikipedia.save_page', format='mobi', q=query) }}">[.mobi]</a>
-            <a href="{{ url_for('wikipedia.save_page', format='azw3', q=query) }}">[.azw3]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='html', q=query, url=url) }}">[.html]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='txt', q=query, url=url) }}">[.txt]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='md', q=query, url=url) }}">[.md]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='epub', q=query, url=url) }}">[.epub]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='mobi', q=query, url=url) }}">[.mobi]</a>
+            <a href="{{ url_for('wikipedia.save_page', format='azw3', q=query, url=url) }}">[.azw3]</a>
         </p>
     </div>
     {% endif %}
