@@ -1,14 +1,26 @@
+import io
 import logging
 import os
+import re
 import socket
 import ssl
 import subprocess
 import sys
 import tempfile
+import textwrap
 from urllib.parse import urljoin, urlparse, quote
 
 from bs4 import BeautifulSoup
-from flask import render_template, Blueprint, request, Response, send_file, abort
+from flask import (
+    render_template,
+    Blueprint,
+    request,
+    Response,
+    send_file,
+    abort,
+    url_for,
+)
+from markitdown import MarkItDown
 from pathvalidate import sanitize_filename
 
 from kindler.gemini_converter import gemtext_to_html
@@ -17,7 +29,9 @@ gemini_bp = Blueprint("gemini", __name__, url_prefix="/gemini")
 
 SEARCH_URL = "gemini://tlgs.one"
 
-allowed_formats = {"html", "epub", "mobi", "azw3"}
+allowed_formats = {"html", "txt", "md", "epub", "mobi", "azw3"}
+
+md = MarkItDown(enable_plugins=False)
 
 
 @gemini_bp.route("/")
@@ -81,6 +95,20 @@ def save_page():
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
             f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.html'))}"
+        )
+        return response
+    elif "txt" == save_format:
+        text_content = markdown_to_text(extract_markdown(wrap_to_html(article)))
+        response = Response(text_content, mimetype="text/plain")
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.txt'))}"
+        )
+        return response
+    elif "md" == save_format:
+        markdown_content = extract_markdown(wrap_to_html(article))
+        response = Response(markdown_content, mimetype="text/plain")
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.md'))}"
         )
         return response
     else:
@@ -184,7 +212,7 @@ def clean_gemini_html(html_content, base_url, query, is_search=False):
             link["href"] = f"/gemini/readability?q={query}&url={encoded}"
         elif scheme in ("http", "https"):
             encoded = quote(absolute_url, safe="")
-            link["href"] = f"/readability?q={query}&url={encoded}"
+            link["href"] = f"/web/readability?q={query}&url={encoded}"
         elif absolute_url.startswith("/"):
             link["href"] = (
                 f"/gemini/readability?q={query}&url=gemini://{urlparse(base_url).netloc}{absolute_url}"
@@ -195,3 +223,98 @@ def clean_gemini_html(html_content, base_url, query, is_search=False):
             pass
 
     return str(soup)
+
+
+def extract_markdown(html):
+    return md.convert(io.BytesIO(html.encode("utf-8"))).text_content
+
+
+def markdown_to_text(md, width=80, max_empty_lines=1):
+    lines = md.splitlines()
+    output = []
+    in_code_block = False
+    code_lines = []
+    empty_count = 0  # track consecutive empty lines
+
+    for line in lines:
+        line = line.rstrip()
+
+        # --- Handle code blocks ---
+        if line.startswith("```"):
+            if in_code_block:
+                # End of code block: append collected lines
+                if code_lines:
+                    output.append("[code block]")
+                    output.extend(code_lines)
+                    output.append("[code block]")
+                    output.append("")
+                    code_lines = []
+                in_code_block = False
+            else:
+                # Start of code block
+                in_code_block = True
+            continue
+
+        if in_code_block:
+            # Collect code lines (do not wrap or alter)
+            code_lines.append(line)
+            continue
+
+        # --- Strip Markdown links ---
+        line = re.sub(r"\[(.*?)\]\((.*?)\)", r"\1", line)
+
+        # --- Headers ---
+        header_match = re.match(r"^(#{1,6})\s*(.*)", line)
+        if header_match:
+            level, text = header_match.groups()
+            text = text.strip().upper()
+            if output and output[-1] != "":
+                output.append("")
+            output.append(text)
+            output.append("=" * len(text))
+            empty_count = 0
+            continue
+
+        # --- Lists (unordered + ordered) ---
+        list_match = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)", line)
+        if list_match:
+            indent, marker, content = list_match.groups()
+            level = len(indent) // 2
+            bullet = "- "
+            prefix = "  " * level + bullet
+            wrapped = textwrap.fill(
+                content,
+                width=width,
+                initial_indent=prefix,
+                subsequent_indent="  " * (level + 1),
+            )
+            output.append(wrapped)
+            empty_count = 0
+            continue
+
+        # --- Normal paragraph lines ---
+        if line.strip():
+            wrapped = textwrap.fill(line, width=width)
+            output.append(wrapped)
+            empty_count = 0
+        else:
+            # Handle empty lines
+            empty_count += 1
+            if empty_count <= max_empty_lines:
+                output.append("")
+
+    return "\n".join(output).strip()
+
+
+def wrap_to_html(article):
+    html = f"""<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{article['title']}</title>
+    </head>
+    <body>
+        {article['content']}
+    </body>
+    </html>"""
+    return html
