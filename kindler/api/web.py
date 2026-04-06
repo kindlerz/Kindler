@@ -112,21 +112,21 @@ def save_page():
     if "html" == save_format:
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.html')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.html'))}"
         )
         return response
     elif "txt" == save_format:
         text_content = markdown_to_text(extract_markdown(article["content"]))
         response = Response(text_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.txt')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.txt'))}"
         )
         return response
     elif "md" == save_format:
         markdown_content = extract_markdown(article["content"])
         response = Response(markdown_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.md')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.md'))}"
         )
         return response
     else:

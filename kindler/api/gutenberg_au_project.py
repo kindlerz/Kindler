@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import tempfile
 import uuid
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote
 
 import requests
 from bs4 import BeautifulSoup, Comment
@@ -115,7 +115,7 @@ def save_page():
         )
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.html')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.html'))}"
         )
         return response
     else:
