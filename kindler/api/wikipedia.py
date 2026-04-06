@@ -293,6 +293,7 @@ def markdown_to_text(md, width=80, max_empty_lines=1):
 
     return "\n".join(output).strip()
 
+
 def wrap_to_html(article):
     html = f"""<!DOCTYPE html>
     <html lang="en">

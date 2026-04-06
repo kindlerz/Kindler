@@ -11,7 +11,15 @@ import textwrap
 from urllib.parse import urljoin, urlparse, quote
 
 from bs4 import BeautifulSoup
-from flask import render_template, Blueprint, request, Response, send_file, abort, url_for
+from flask import (
+    render_template,
+    Blueprint,
+    request,
+    Response,
+    send_file,
+    abort,
+    url_for,
+)
 from markitdown import MarkItDown
 from pathvalidate import sanitize_filename
 
@@ -24,6 +32,7 @@ SEARCH_URL = "gemini://tlgs.one"
 allowed_formats = {"html", "txt", "md", "epub", "mobi", "azw3"}
 
 md = MarkItDown(enable_plugins=False)
+
 
 @gemini_bp.route("/")
 def home():
@@ -215,8 +224,10 @@ def clean_gemini_html(html_content, base_url, query, is_search=False):
 
     return str(soup)
 
+
 def extract_markdown(html):
     return md.convert(io.BytesIO(html.encode("utf-8"))).text_content
+
 
 def markdown_to_text(md, width=80, max_empty_lines=1):
     lines = md.splitlines()
