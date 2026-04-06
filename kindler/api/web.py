@@ -379,8 +379,8 @@ def extract_markdown(html):
 def markdown_to_text(md, width=80, max_empty_lines=1):
     lines = md.splitlines()
     output = []
-    list_stack = []
     in_code_block = False
+    code_lines = []
     empty_count = 0  # track consecutive empty lines
 
     for line in lines:
@@ -388,12 +388,24 @@ def markdown_to_text(md, width=80, max_empty_lines=1):
 
         # --- Handle code blocks ---
         if line.startswith("```"):
-            in_code_block = not in_code_block
             if in_code_block:
-                output.append("[code block]")
+                # End of code block: append collected lines
+                if code_lines:
+                    output.append("[code block]")
+                    output.extend(code_lines)
+                    output.append("[code block]")
+                    output.append("")
+                    code_lines = []
+                in_code_block = False
+            else:
+                # Start of code block
+                in_code_block = True
             continue
+
         if in_code_block:
-            continue  # skip code content
+            # Collect code lines (do not wrap or alter)
+            code_lines.append(line)
+            continue
 
         # --- Strip Markdown links ---
         line = re.sub(r"\[(.*?)\]\((.*?)\)", r"\1", line)
@@ -404,7 +416,7 @@ def markdown_to_text(md, width=80, max_empty_lines=1):
             level, text = header_match.groups()
             text = text.strip().upper()
             if output and output[-1] != "":
-                output.append("")  # ensure blank line before header
+                output.append("")
             output.append(text)
             output.append("=" * len(text))
             empty_count = 0
