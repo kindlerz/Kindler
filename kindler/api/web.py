@@ -1,17 +1,18 @@
+import io
 import logging
 import os
+import re
 import subprocess
 import tempfile
-from urllib.parse import urljoin, urlparse, quote
-from markitdown import MarkItDown
-import re
 import textwrap
-import io
+from urllib.parse import urljoin, urlparse, quote
+
 import requests
 from bs4 import BeautifulSoup
 from ddgs import DDGS
 from flask import render_template, Blueprint, request, Response, redirect, url_for
 from flask import send_file, abort
+from markitdown import MarkItDown
 from pathvalidate import sanitize_filename
 from readabilipy import simple_json_from_html_string
 from readability import Document
@@ -116,14 +117,14 @@ def save_page():
         )
         return response
     elif "txt" == save_format:
-        text_content = markdown_to_text(extract_markdown(article["content"]))
+        text_content = markdown_to_text(extract_markdown(wrap_to_html(article)))
         response = Response(text_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
             f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.txt'))}"
         )
         return response
     elif "md" == save_format:
-        markdown_content = extract_markdown(article["content"])
+        markdown_content = extract_markdown(wrap_to_html(article))
         response = Response(markdown_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
             f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.md'))}"
@@ -438,3 +439,18 @@ def markdown_to_text(md, width=80, max_empty_lines=1):
                 output.append("")
 
     return "\n".join(output).strip()
+
+
+def wrap_to_html(article):
+    html = f"""<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{article['title']}</title>
+    </head>
+    <body>
+        <h1>{article['title']}</h1>
+        {article['content']}
+    </body>
+    </html>"""
+    return html
