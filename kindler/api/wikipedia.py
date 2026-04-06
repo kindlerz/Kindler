@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import re
 import textwrap
+from urllib.parse import quote, unquote
 
 from ddgs import DDGS
 from markitdown import MarkItDown
@@ -62,7 +63,7 @@ def readability_page():
         query=query,
         title=article["title"],
         content=article["content"],
-        url=article["url"],
+        url=unquote(article["url"]),
     )
 
 
@@ -89,23 +90,21 @@ def save_page():
     if "html" == save_format:
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.html')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.html'))}"
         )
         return response
     elif "txt" == save_format:
-        content = f"<h1>{article['title']}</h1>" + article["content"]
-        text_content = markdown_to_text(extract_markdown(content))
+        text_content = markdown_to_text(extract_markdown(wrap_to_html(article)))
         response = Response(text_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.txt')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.txt'))}"
         )
         return response
     elif "md" == save_format:
-        content = f"<h1>{article['title']}</h1>" + article["content"]
-        markdown_content = extract_markdown(content)
+        markdown_content = extract_markdown(wrap_to_html(article))
         response = Response(markdown_content, mimetype="text/plain")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.md')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.md'))}"
         )
         return response
     else:
@@ -281,3 +280,18 @@ def markdown_to_text(md, width=80, max_empty_lines=1):
                 output.append("")
 
     return "\n".join(output).strip()
+
+
+def wrap_to_html(article):
+    html = f"""<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{article['title']}</title>
+    </head>
+    <body>
+        <h1>{article['title']}</h1>
+        {article['content']}
+    </body>
+    </html>"""
+    return html

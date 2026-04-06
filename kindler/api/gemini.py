@@ -80,7 +80,7 @@ def save_page():
     if "html" == save_format:
         response = Response(html_content, mimetype="text/html")
         response.headers["Content-Disposition"] = (
-            f"attachment; filename={sanitize_filename(article['title'] + '.html')}"
+            f"attachment; filename*=UTF-8''{quote(sanitize_filename(article['title'] + '.html'))}"
         )
         return response
     else:
