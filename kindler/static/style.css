@@ -123,19 +123,19 @@ small, time {
     font-style: italic;
 }
 
-table {
+.library-table {
     margin: 1em auto;
     border-spacing: 1em;
 }
 
-td {
+.library-table td {
     text-align: center;
     width: 200px;
     padding-bottom: 1em;
     vertical-align: top;
 }
 
-td img {
+.library-table td img {
     width: 200px;
     height: 300px;
     object-fit: cover;
@@ -143,12 +143,12 @@ td img {
     margin: 0 auto;
 }
 
-td a {
+.library-table td a {
     display: block;
     text-align: center;
 }
 
-td a small {
+.library-table td a small {
     display: block;
     margin-top: 0.3em;
     white-space: normal;
@@ -158,7 +158,7 @@ td a small {
     color: #333;
 }
 
-table tr hr {
+.library-table tr hr {
     border: none;
     border-top: 1px solid #ccc;
     margin: 1em 0;
@@ -265,4 +265,138 @@ a.retry {
 
 a.retry:hover {
     background-color: #ccc;
+}
+
+.youtube-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2em 0;
+}
+
+.youtube-table td {
+    padding: 0.5em 0;
+    vertical-align: top;
+    text-align: left;
+}
+
+.youtube-table img {
+    width: 320px;
+    height: 180px;
+    display: block;
+    border: 3px solid transparent;
+}
+
+.youtube-table a:hover img {
+    border: 3px solid #ccc;
+}
+
+.youtube-title {
+    font-family: serif;
+    font-size: 1.2em;
+    color: #000;
+    display: block;
+    margin-bottom: 0px;
+    line-height: 1.3;
+}
+
+.youtube-meta {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  font-size: 0.7em;
+  margin-top: 0px;
+  margin-bottom: 0.7em;
+  display: block;
+  font-style: normal;
+}
+
+.youtube-description {
+  font-family: serif;
+  font-size: .8em;
+  color: #000;
+  display: block;
+  margin-top: 1em;
+}
+
+.youtube-player-title {
+    font-size: 1.4em;
+    margin: 0.5em 0;
+}
+
+.youtube-player-channel-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.youtube-player-channel-info {
+    vertical-align: top;
+    text-align: left;
+}
+
+.youtube-player-channel-info span a {
+    font-weight: bold;
+}
+
+.youtube-player-channel-img {
+    width: 48px;
+    height: 48px;
+    vertical-align: top;
+}
+
+.youtube-player-buttons {
+    vertical-align: top;
+    text-align: right;
+}
+
+.youtube-player-btn {
+    display: inline-block;
+    margin-left: 0.5em;
+    max-width: 25em;
+    padding: 0.6em;
+    background-color: #fafafa;
+    border: 1px solid #999;
+    text-decoration: none;
+    font-family: serif;
+    color: black;
+    font-size: 1.0em;
+    border-radius: 0.3em;
+    font-weight: bold;
+    background-color: #ddd;
+    box-sizing: border-box;
+    width: 9em;
+    text-align: center;
+}
+
+.youtube-player-btn i {
+    vertical-align: middle;
+}
+
+
+.youtube-player-btn span {
+    font-size: 0.8em;
+    padding-left: 0.5em;
+    font-weight: lighter;
+    vertical-align: middle;
+}
+
+.youtube-player-btn:hover {
+    background-color: #ccc;
+}
+
+
+.youtube-player-meta {
+    font-size: 0.9em;
+    font-style: italic;
+    color: #333;
+}
+
+.youtube-player-description {
+  font-family: serif;
+  font-size: 0.9em;
+  color: #000;
+  display: block;
+  margin-top: 1em;
 }

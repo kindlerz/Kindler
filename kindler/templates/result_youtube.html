@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>YouTube Results - {{ query }}</title>
+</head>
+<body>
+<div class="top-nav">
+    <a href="{{ url_for('home.home') }}">Home</a>
+    <form action="{{ url_for('youtube.search') }}" method="get">
+        <input type="text" id="q" name="q" value="{{ query }}">
+        <input type="submit" value="Search">
+    </form>
+</div>
+<hr>
+<table class="youtube-table">
+    {% for result in results %}
+    <tr>
+        <td width="340" valign="top">
+            <a href="{{ url_for('youtube.readability_page', id=result['video_id'], q=query) }}">
+                <img src="{{ url_for('youtube.proxy_youtube', url=result['thumbnail']) }}" alt="{{ result['title'] }}">
+            </a>
+        </td>
+        <td valign="top">
+            <a class="youtube-title" href="{{ url_for('youtube.readability_page', id=result['video_id'], q=query) }}">
+                {{ result['title'] }}
+            </a>
+            <small class="youtube-meta">
+                {{ result['view_count'] }} views - {{ result['published_year'] }}
+            </small>
+            <small class="youtube-meta">
+                <a href="{{ result['channel_url'] }}">
+                    {{ result['channel_name'] }}
+                </a>
+            </small>
+            <span class="youtube-description">
+                {{ result['description'][:130] }}{% if result['description']|length > 130 %}...{% endif %}
+            </span>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <hr>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

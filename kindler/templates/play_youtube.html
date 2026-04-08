@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>{{ video['title'] }}</title>
+</head>
+<body>
+
+<div class="top-nav">
+    <a href="{{ url_for('home.home') }}">Home</a>
+    <form action="{{ url_for('youtube.search') }}" method="get">
+        <input type="text" id="q" name="q" value="{{ query }}">
+        <input type="submit" value="Search">
+    </form>
+</div>
+
+<hr>
+
+<p align="center">
+    <video width="640" height="360" src="{{ url_for('youtube.proxy_youtube', url=video['video_play_url']) }}" controls>
+        Cannot play
+    </video>
+</p>
+
+<h2 class="youtube-player-title">{{ video['title'] }}</h2>
+
+<hr>
+
+<table class="youtube-player-channel-table">
+    <tr>
+        <td class="youtube-player-channel-info">
+            <!--<img class="youtube-player-channel-img" src="{{ video['channel_image'] }}" alt="{{ video['channel_name'] }}">-->
+            <span>
+                <a href="{{ video['channel_url'] }}">{{ video['channel_name'] }}</a><br>
+                <small class="youtube-meta">{{ video['subscriber_count'] }} subscribers</small>
+            </span>
+        </td>
+        <td class="youtube-player-buttons" align="right">
+            <a class="youtube-player-btn" href="{{ video['youtube_video_link'] }}"><i class="fa-2x fa-brands fa-youtube"></i><span>On YouTube</span></a>
+            <a class="youtube-player-btn" href="{{ video['video_play_url'] }}"><i class="fa-2x fa-brands fa-expeditedssl"></i><span>HTTPS</span></a>
+            <a class="youtube-player-btn" href="{{ url_for('youtube.proxy_youtube', url=video['video_play_url']) }}"><i class="fa-2x fa-solid fa-download"></i><span>Download</span></a>
+        </td>
+    </tr>
+</table>
+<hr>
+<p class="youtube-player-meta">
+    {{ video['view_count'] }} views - {{ video['published_text'] }}
+</p>
+<p class="youtube-player-description">
+    {{ video['description'] | safe }}
+</p>
+</body>
+</html>
