@@ -41,7 +41,7 @@
         <td class="youtube-player-buttons" align="right">
             <a class="youtube-player-btn" href="{{ video['youtube_video_link'] }}"><i class="fa-2x fa-brands fa-youtube"></i><span>On YouTube</span></a>
             <a class="youtube-player-btn" href="{{ video['video_play_url'] }}"><i class="fa-2x fa-brands fa-expeditedssl"></i><span>HTTPS</span></a>
-            <a class="youtube-player-btn" href="{{ url_for('youtube.proxy_youtube', url=video['video_play_url']) }}"><i class="fa-2x fa-solid fa-download"></i><span>Download</span></a>
+            <a class="youtube-player-btn" href="{{ url_for('youtube.proxy_download', url=video['video_play_url'], title=video['title']) }}"><i class="fa-2x fa-solid fa-download"></i><span>Download</span></a>
         </td>
     </tr>
 </table>
