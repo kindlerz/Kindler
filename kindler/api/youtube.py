@@ -5,8 +5,6 @@ import requests
 import yt_dlp
 from flask import render_template, Blueprint, request, Response, stream_with_context
 from kindler.util import HEADERS
-from flask import Response, request, stream_with_context
-import requests
 import re
 import unicodedata
 
