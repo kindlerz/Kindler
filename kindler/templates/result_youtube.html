@@ -54,7 +54,9 @@
                 </a>
             </small>
             <span class="youtube-description">
-                {{ result['description'][:130] }}{% if result['description']|length > 130 %}...{% endif %}
+                {% if result['description'] %}
+                    {{ result['description'][:130] }}{% if result['description']|length > 130 %}...{% endif %}
+                {% endif %}
             </span>
         </td>
     </tr>
