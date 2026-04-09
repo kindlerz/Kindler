@@ -9,6 +9,8 @@ from kindler.util import HEADERS
 
 youtube_bp = Blueprint("youtube", __name__, url_prefix="/youtube")
 
+INVIDIOUS_SEARCH_URL = "https://inv.thepixora.com/api/v1"
+
 
 @youtube_bp.route("/")
 def home():
@@ -32,7 +34,12 @@ def play_page():
     if not video_id:
         logging.warning("Video ID is empty.")
         return "Please provide a YouTube video id.", 400
-    video = get_video(get_youtube_video(video_id))
+    try:
+        video = get_video(get_youtube_video(video_id))
+        raise Exception("blah")
+    except:
+        logging.error("Failed to get from yt-dlp, falling back to ")
+        video = get_video_fallback(get_youtube_video_fallback(video_id))
     return render_template("play_youtube.html", query=query, video=video)
 
 
@@ -123,7 +130,7 @@ def get_youtube_video(video_id: str):
 def get_video(video_details):
     if (
         video_details.get("url") is not None
-        and video_details.get("url") is not "non"
+        and video_details.get("url") is not "none"
         and video_details.get("height") <= 480
         and video_details.get("acodec") != "none"
         and video_details.get("vcodec") != "none"
@@ -209,3 +216,63 @@ def match(info_format, height=None, ext="mp4"):
         and info_format.get("vcodec") != "none"
         and info_format.get("acodec") != "none"
     )
+
+
+def get_youtube_video_fallback(video_id: str):
+    response = requests.get(
+        f"{INVIDIOUS_SEARCH_URL}/videos/{video_id}",
+        headers=HEADERS,
+        timeout=30,
+    )
+    return response.json()
+
+
+def get_video_fallback(video_details):
+    video_play_url = pick_video_url_fallback(video_details)
+    return {
+        "video_play_url": video_play_url,
+        "description": video_details.get("description"),
+        "title": video_details.get("title"),
+        "published_text": video_details.get("publishedText"),
+        "view_count": format_views(video_details.get("viewCount")),
+        "channel_name": video_details.get("author"),
+        "subscriber_count": video_details.get("subCountText"),
+        "channel_url": "https://youtube.com" + video_details.get("authorUrl", ""),
+        "youtube_video_link": "https://youtube.com/watch?v="
+        + video_details.get("videoId"),
+    }
+
+
+def pick_video_url_fallback(video_details):
+    streams = video_details.get("formatStreams", [])
+    if not streams:
+        return None
+
+    def match(stream, resolution=None, container=None, encoding=None):
+        return (
+            (resolution is None or stream.get("resolution") == resolution)
+            and (container is None or stream.get("container") == container)
+            and (encoding is None or stream.get("encoding") == encoding)
+        )
+
+    # Priority 1
+    for s in streams:
+        if match(s, "480p", "mp4", "h264"):
+            return s.get("url")
+
+    # Priority 2
+    for s in streams:
+        if match(s, "360p", "mp4", "h264"):
+            return s.get("url")
+
+    # Priority 3
+    for s in streams:
+        if match(s, "480p"):
+            return s.get("url")
+
+    # Priority 4
+    for s in streams:
+        if match(s, "360p"):
+            return s.get("url")
+
+    return None
