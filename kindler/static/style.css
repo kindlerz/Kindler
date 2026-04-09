@@ -321,12 +321,25 @@ a.retry:hover {
   margin-top: 1em;
 }
 
+.youtube-thumbnail-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .youtube-duration {
-  margin-top: -1.5em;
-  display: block;
-  background: white;
-  text-align: right;
-  margin-right: 0.9em;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #000;
+    color: #fff;
+    font-size: 0.7em;
+    padding: 2px 4px;
+    font-family: Arial, sans-serif;
+}
+
+.youtube-duration-live {
+    background: #cc0000;
+    font-weight: bold;
 }
 
 .youtube-player-title {
@@ -382,7 +395,6 @@ a.retry:hover {
     vertical-align: middle;
 }
 
-
 .youtube-player-btn span {
     font-size: 0.8em;
     padding-left: 0.5em;
@@ -393,7 +405,6 @@ a.retry:hover {
 .youtube-player-btn:hover {
     background-color: #ccc;
 }
-
 
 .youtube-player-meta {
     font-size: 0.9em;

@@ -63,9 +63,19 @@ def parse_search_result(search_result):
         channel_url = item.get("channel_url")
         channel_name = item.get("channel")
         description = item.get("description")
-        view_count = format_views(item.get("view_count"))
         duration = format_duration(item.get("duration"))
         published_year = item.get("published_year")
+        live_status = item.get("live_status")
+        if live_status == "is_live":
+            live_status = "LIVE"
+        elif live_status == "was_live":
+            live_status = "STREAMED"
+        else:
+            live_status = None
+        view_count = item.get("view_count")
+        if not view_count and live_status == "LIVE":
+            view_count = item.get("concurrent_view_count")
+        view_count = format_views(view_count)
         thumb_url = None
         thumbnails = item.get("thumbnails", [])
         for t in thumbnails:
@@ -89,6 +99,7 @@ def parse_search_result(search_result):
                 "view_count": view_count,
                 "published_year": published_year,
                 "duration": duration,
+                "live_status": live_status,
             }
         )
     return result
@@ -136,6 +147,8 @@ def get_video(video_details):
 
 
 def format_duration(seconds):
+    if not seconds:
+        return "N/A"
     seconds = int(seconds)  # make sure it’s an integer
     hours, remainder = divmod(seconds, 3600)
     minutes, secs = divmod(remainder, 60)
@@ -166,6 +179,8 @@ def format_upload_date(publish_date):
 
 
 def format_views(view_count):
+    if not view_count:
+        return None
     view_count = int(view_count)
     if view_count >= 1_000_000_000:
         return f"{view_count / 1_000_000_000:.1f}B".rstrip("0").rstrip(".")

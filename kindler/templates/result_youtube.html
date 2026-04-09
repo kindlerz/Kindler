@@ -20,7 +20,14 @@
     <tr>
         <td width="340" valign="top">
             <a href="{{ url_for('youtube.play_page', id=result['video_id'], q=query) }}">
-                <img src="{{ url_for('youtube.proxy_youtube', url=result['thumbnail']) }}" alt="{{ result['title'] }}"><div class="youtube-duration">[{{ result['duration'] }}]</div>
+                <span class="youtube-thumbnail-wrapper">
+                    <img src="{{ url_for('youtube.proxy_youtube', url=result['thumbnail']) }}" alt="{{ result['title'] }}">
+                    {% if result['live_status'] == 'LIVE' %}
+                        <span class="youtube-duration youtube-duration-live">LIVE</span>
+                    {% else %}
+                        <span class="youtube-duration">[{{ result['duration'] }}]</span>
+                    {% endif %}
+                </span>
             </a>
         </td>
         <td valign="top">
@@ -28,7 +35,18 @@
                 {{ result['title'] }}
             </a>
             <small class="youtube-meta">
-                {{ result['view_count'] }} views - {{ result['published_year'] or '' }} - [{{ result['duration'] }}]
+                {{ result['view_count'] }}
+                {% if result['live_status'] == 'LIVE' %}
+                    watching
+                {% else %}
+                    views
+                {% endif %}
+                {% if result['published_year'] %}
+                    - {{ result['published_year'] }}
+                {% endif %}
+                {% if result['live_status'] %}
+                    - [{{ result['live_status'] }}]
+                {% endif %}
             </small>
             <small class="youtube-meta">
                 <a href="{{ result['channel_url'] }}">
