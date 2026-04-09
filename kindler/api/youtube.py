@@ -3,9 +3,12 @@ from datetime import datetime
 
 import requests
 import yt_dlp
-from flask import render_template, Blueprint, request, Response
-
+from flask import render_template, Blueprint, request, Response, stream_with_context
 from kindler.util import HEADERS
+from flask import Response, request, stream_with_context
+import requests
+import re
+import unicodedata
 
 youtube_bp = Blueprint("youtube", __name__, url_prefix="/youtube")
 
@@ -47,8 +50,73 @@ def proxy_youtube():
     video_url = request.args.get("url")
     if not video_url:
         return "Missing url", 400
-    r = requests.get(url=video_url, headers=HEADERS)
-    return Response(r.content, content_type=r.headers.get("Content-Type", "video/mp4"))
+
+    headers = {
+        "User-Agent": request.headers.get("User-Agent", ""),
+    }
+
+    # Forward Range header if present
+    if "Range" in request.headers:
+        headers["Range"] = request.headers["Range"]
+
+    r = requests.get(video_url, headers=headers, stream=True)
+
+    def generate():
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                yield chunk
+
+    response = Response(stream_with_context(generate()), status=r.status_code)
+
+    # Forward important headers
+    for h in [
+        "Content-Type",
+        "Content-Length",
+        "Content-Range",
+        "Accept-Ranges",
+    ]:
+        if h in r.headers:
+            response.headers[h] = r.headers[h]
+
+    return response
+
+
+@youtube_bp.route("/proxy_download")
+def proxy_download():
+    video_url = request.args.get("url")
+    if not video_url:
+        return "Missing url", 400
+    raw_title = request.args.get("title", "")
+    filename = sanitize_filename(raw_title)
+    headers = {
+        "User-Agent": request.headers.get("User-Agent", ""),
+    }
+    r = requests.get(video_url, headers=headers, stream=True, timeout=60)
+
+    def generate():
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                yield chunk
+
+    response = Response(stream_with_context(generate()), mimetype="video/mp4")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    if "Content-Length" in r.headers:
+        response.headers["Content-Length"] = r.headers["Content-Length"]
+    return response
+
+
+def sanitize_filename(title, ext="mp4", max_len=25):
+    title = (
+        unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode("ascii")
+    )
+    title = re.sub(r"[^a-zA-Z0-9]", "-", title)
+    title = re.sub(r"-+", "-", title)
+    title = title.strip("-")
+    if not title:
+        title = "video"
+    if len(title) > max_len:
+        title = title[:max_len].rstrip("-")
+    return f"{title}.{ext}"
 
 
 def search_youtube(query: str):
