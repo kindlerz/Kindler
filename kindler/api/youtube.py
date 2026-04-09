@@ -32,6 +32,7 @@ def search():
 def play_page():
     query = request.args.get("q")
     video_id = request.args.get("id")
+    is_https = bool(request.is_secure)
     if not video_id:
         logging.warning("Video ID is empty.")
         return "Please provide a YouTube video id.", 400
@@ -40,6 +41,7 @@ def play_page():
     except:
         logging.error("Failed to get from yt-dlp, falling back to ")
         video = get_video_fallback(get_youtube_video_fallback(video_id))
+    video["is_https"] = is_https
     return render_template("play_youtube.html", query=query, video=video)
 
 
