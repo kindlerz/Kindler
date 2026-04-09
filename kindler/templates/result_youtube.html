@@ -19,16 +19,16 @@
     {% for result in results %}
     <tr>
         <td width="340" valign="top">
-            <a href="{{ url_for('youtube.readability_page', id=result['video_id'], q=query) }}">
-                <img src="{{ url_for('youtube.proxy_youtube', url=result['thumbnail']) }}" alt="{{ result['title'] }}">
+            <a href="{{ url_for('youtube.play_page', id=result['video_id'], q=query) }}">
+                <img src="{{ url_for('youtube.proxy_youtube', url=result['thumbnail']) }}" alt="{{ result['title'] }}"><div class="youtube-duration">[{{ result['duration'] }}]</div>
             </a>
         </td>
         <td valign="top">
-            <a class="youtube-title" href="{{ url_for('youtube.readability_page', id=result['video_id'], q=query) }}">
+            <a class="youtube-title" href="{{ url_for('youtube.play_page', id=result['video_id'], q=query) }}">
                 {{ result['title'] }}
             </a>
             <small class="youtube-meta">
-                {{ result['view_count'] }} views - {{ result['published_year'] }}
+                {{ result['view_count'] }} views - {{ result['published_year'] or '' }} - [{{ result['duration'] }}]
             </small>
             <small class="youtube-meta">
                 <a href="{{ result['channel_url'] }}">

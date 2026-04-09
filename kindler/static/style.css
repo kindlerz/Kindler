@@ -321,6 +321,14 @@ a.retry:hover {
   margin-top: 1em;
 }
 
+.youtube-duration {
+  margin-top: -1.5em;
+  display: block;
+  background: white;
+  text-align: right;
+  margin-right: 0.9em;
+}
+
 .youtube-player-title {
     font-size: 1.4em;
     margin: 0.5em 0;
