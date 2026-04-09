@@ -15,7 +15,7 @@
         </form>
     </div>
     <hr>
-    <table>
+    <table class="library-table">
         <tr>
             {% for result in results %}
             {% set author_names = result['authors'] | map(attribute='name') %}

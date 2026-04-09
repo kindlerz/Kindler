@@ -13,6 +13,7 @@ from kindler.api.news import news_bp
 from kindler.api.standard_ebooks import standard_ebooks_bp
 from kindler.api.web import web_bp
 from kindler.api.wikipedia import wikipedia_bp
+from kindler.api.youtube import youtube_bp
 from kindler.cache import cache, CACHE_CONFIG
 
 
@@ -62,6 +63,7 @@ app.register_blueprint(gutenberg_bp)
 app.register_blueprint(gutenberg_au_bp)
 app.register_blueprint(standard_ebooks_bp)
 app.register_blueprint(wikipedia_bp)
+app.register_blueprint(youtube_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(error_bp)
 app.register_blueprint(healthz, url_prefix="/healthz")
@@ -74,3 +76,5 @@ def page_not_found(e):
 
 if __name__ == "__main__":
     app.run(debug=True)
+    # uncomment to be able to access the app via other devices on router
+    # app.run(host="0.0.0.0", port=5000, debug=True)
