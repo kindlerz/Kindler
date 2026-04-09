@@ -36,7 +36,6 @@ def play_page():
         return "Please provide a YouTube video id.", 400
     try:
         video = get_video(get_youtube_video(video_id))
-        raise Exception("blah")
     except:
         logging.error("Failed to get from yt-dlp, falling back to ")
         video = get_video_fallback(get_youtube_video_fallback(video_id))
