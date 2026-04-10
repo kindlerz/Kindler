@@ -3,7 +3,15 @@ from datetime import datetime
 
 import requests
 import yt_dlp
-from flask import render_template, Blueprint, request, Response, stream_with_context
+from flask import (
+    render_template,
+    Blueprint,
+    request,
+    Response,
+    stream_with_context,
+    redirect,
+    url_for,
+)
 from kindler.util import HEADERS
 import re
 import unicodedata
@@ -38,9 +46,19 @@ def play_page():
         return "Please provide a YouTube video id.", 400
     try:
         video = get_video(get_youtube_video(video_id))
-    except:
-        logging.error("Failed to get from yt-dlp, falling back to ")
-        video = get_video_fallback(get_youtube_video_fallback(video_id))
+    except Exception:
+        try:
+            logging.error("Failed to get from yt-dlp, falling back to Invidious")
+            video = get_video_fallback(get_youtube_video_fallback(video_id))
+        except Exception:
+            return redirect(
+                url_for(
+                    "error.error",
+                    status_code=500,
+                    url=f"https://youtube.com/watch?v={video_id}",
+                )
+            )
+
     video["is_https"] = is_https
     return render_template("play_youtube.html", query=query, video=video)
 
@@ -286,12 +304,20 @@ def match(info_format, height=None, ext="mp4"):
 
 
 def get_youtube_video_fallback(video_id: str):
-    response = requests.get(
-        f"{INVIDIOUS_SEARCH_URL}/videos/{video_id}",
-        headers=HEADERS,
-        timeout=30,
-    )
-    return response.json()
+    try:
+        response = requests.get(
+            f"{INVIDIOUS_SEARCH_URL}/videos/{video_id}",
+            headers=HEADERS,
+            timeout=10,
+        )
+        if response.status_code is not 200:
+            raise Exception(
+                f"Invidious return none 200 response: {response.status_code}"
+            )
+        return response.json()
+    except Exception:
+        logging.error("Failed to retrieve video details from the Invidious server")
+        raise
 
 
 def get_video_fallback(video_details):
