@@ -20,12 +20,12 @@
 <hr>
 
 <p align="center">
-    {% if video['is_https'] %}
-        <video width="640" height="360" src="{{ video['video_play_url'] }}" controls>
+    {% if video['play_http'] %}
+        <video width="640" height="360" src="{{ video['video_play_url_http'] }}" controls>
             Cannot play
         </video>
     {% else %}
-        <video width="640" height="360" src="{{ url_for('youtube.proxy_youtube', url=video['video_play_url']) }}" controls>
+        <video width="640" height="360" src="{{ video['video_play_url'] }}" controls>
             Cannot play
         </video>
     {% endif %}
@@ -46,8 +46,10 @@
         </td>
         <td class="youtube-player-buttons" align="right">
             <a class="youtube-player-btn" href="{{ video['youtube_video_link'] }}"><i class="fa-2x fa-brands fa-youtube"></i><span>On YouTube</span></a>
-            {% if not video['is_https'] %}
-                <a class="youtube-player-btn" href="{{ video['video_play_url'] }}"><i class="fa-2x fa-brands fa-expeditedssl"></i><span>HTTPS</span></a>
+            {% if video['play_http'] %}
+                <a class="youtube-player-btn" href="{{ url_for('youtube.play_page', id=video['video_id'], q=query) }}"><i class="fa-2x fa-brands fa-expeditedssl"></i><span>HTTPS</span></a>
+            {% else %}
+                <a class="youtube-player-btn" href="{{ url_for('youtube.play_page', id=video['video_id'], q=query, play_http=True) }}"><i class="fa-2x fa-solid fa-unlock"></i><span>Proxy</span></a>
             {% endif %}
             <!--<a class="youtube-player-btn" href="{{ url_for('youtube.proxy_download', url=video['video_play_url'], title=video['title']) }}"><i class="fa-2x fa-solid fa-download"></i><span>Download</span></a>-->
         </td>

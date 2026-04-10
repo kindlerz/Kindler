@@ -40,7 +40,7 @@ def search():
 def play_page():
     query = request.args.get("q")
     video_id = request.args.get("id")
-    is_https = bool(request.is_secure)
+    play_http = bool(request.args.get("play_http"))
     if not video_id:
         logging.warning("Video ID is empty.")
         return "Please provide a YouTube video id.", 400
@@ -58,8 +58,11 @@ def play_page():
                     url=f"https://youtube.com/watch?v={video_id}",
                 )
             )
-
-    video["is_https"] = is_https
+    video["play_http"] = play_http
+    video["video_id"] = video_id
+    video["video_play_url_http"] = url_for(
+        "youtube.proxy_youtube", url=video["video_play_url"]
+    )
     return render_template("play_youtube.html", query=query, video=video)
 
 
