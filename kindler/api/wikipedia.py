@@ -54,10 +54,11 @@ def search():
 def readability_page():
     query = request.args.get("q")
     url = request.args.get("url")
-    if url:
-        article = get_wikipedia_article(url.split("/")[-1], False)
-    else:
-        article = get_wikipedia_article(query, False)
+    title = unquote(url.split("/")[-1]) if url else query
+    article = get_wikipedia_article(title, False)
+    if article is None:
+        logging.warning(f"Wikipedia article not found for title: {title}")
+        return redirect(url_for("error.error", status_code=404, url=url))
     return render_template(
         "read_wikipedia.html",
         query=query,
@@ -78,9 +79,11 @@ def save_page():
         abort(400, "Invalid format")
 
     keep_original_links = "txt" == save_format or "md" == save_format
-    article = get_wikipedia_article_with_cover_image(
-        url.split("/")[-1], keep_original_links
-    )
+    title = unquote(url.split("/")[-1]) if url else query
+    article = get_wikipedia_article_with_cover_image(title, keep_original_links)
+    if article is None:
+        logging.warning(f"Wikipedia article not found for title: {title}")
+        return redirect(url_for("error.error", status_code=404, url=url))
     html_content = render_template(
         "read_save_formatted.html",
         title=article["title"],
@@ -163,13 +166,17 @@ def save_page():
 
 def get_wikipedia_article_with_cover_image(query, keep_original_links):
     article = get_wikipedia_article(query, keep_original_links)
+    if article is None:
+        return None
     article["cover"] = download_cover_image(query)
     return article
 
 
 def get_wikipedia_article(query, keep_original_links):
-    article = {}
     result = wiki.page(query)
+    if not result.exists():
+        return None
+    article = {}
     links = result.links
     content = result.text
     for title in links.keys():

@@ -28,6 +28,6 @@ def get_book_details(book_id):
     response = requests.get(f"{META_SEARCH_URL}/{book_id}", timeout=5)
     response.raise_for_status()
     data = response.json()
-    if not isinstance(data, list):
+    if not isinstance(data, dict):
         raise ValueError(f"Unexpected metasearch response: {data!r}")
     return data
