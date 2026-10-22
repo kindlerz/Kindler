@@ -5,8 +5,30 @@ from googlenewsdecoder import gnewsdecoder
 from pygooglenews import GoogleNews
 
 from kindler.cache import cache
+from urllib.parse import urlparse
 
 news_bp = Blueprint("news", __name__, url_prefix="/news")
+
+EXCLUDED_DOMAINS = {
+    "engadget.com",
+    "apnews.com",
+    "kcra.com",
+    "espn.com",
+    "kxan.com",
+    "pbs.org",
+    "fox4kc.com",
+    "thehill.com",
+    "axios.com",
+    "politico.com",
+    "nytimes.com",
+    "wsj.com",
+    "washingtonpost.com",
+    "ft.com",
+    "sfgate.com",
+    "actionnetwork.com",
+    "seattletimes.com",
+    "phys.org",
+}
 
 
 @news_bp.route("/")
@@ -29,7 +51,7 @@ def search():
         google_news = GoogleNews(country=country_lang[0], lang=country_lang[1])
         news = google_news.geo_headlines(country_lang[0])
     return render_template(
-        "result_news.html", category=category, results=news["entries"]
+        "result_news.html", category=category, results=filter_entries(news["entries"])
     )
 
 
@@ -52,3 +74,13 @@ def decode_google_news_url(url):
     except Exception as e:
         logging.error(f"Error occurred: {e}")
         return url
+
+
+def is_excluded(entry) -> bool:
+    href = entry.get("source", {}).get("href", "")
+    host = (urlparse(href).hostname or "").lower()
+    return any(host == d or host.endswith("." + d) for d in EXCLUDED_DOMAINS)
+
+
+def filter_entries(entries):
+    return [e for e in entries if not is_excluded(e)]
