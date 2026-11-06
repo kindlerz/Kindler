@@ -13,7 +13,9 @@ def error():
     message = map_status_code_to_error(status_code, reason)
     html = render_template("error.html", message=message, url=url)
     if status_code == "429" or (status_code == "403" and reason == "network"):
-        headers = {"Retry-After": str(BLOCK_TTL_SECONDS)} if status_code == "429" else {}
+        headers = (
+            {"Retry-After": str(BLOCK_TTL_SECONDS)} if status_code == "429" else {}
+        )
         return html, int(status_code), headers
     return html
 

@@ -54,7 +54,9 @@ def _get_ranges():
                     try:
                         loaded[version] = _load_ranges(_DATA_DIR / name, version)
                     except Exception as e:
-                        logging.warning("Datacenter IP list %s unavailable: %s", name, e)
+                        logging.warning(
+                            "Datacenter IP list %s unavailable: %s", name, e
+                        )
                         loaded[version] = ([], [])
                 _ranges = loaded
     return _ranges
