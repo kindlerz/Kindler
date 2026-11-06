@@ -17,6 +17,7 @@ from pathvalidate import sanitize_filename
 from readabilipy import simple_json_from_html_string
 from readability import Document
 
+from kindler.abuse import guard
 from kindler.util import is_blob_content
 
 web_bp = Blueprint("web", __name__, url_prefix="/web")
@@ -95,6 +96,10 @@ def save_page():
         return "No URL provided", 400
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
+    if save_format in {"epub", "mobi", "azw3"}:
+        blocked = guard(url)
+        if blocked:
+            return blocked
 
     req = requests.get(url, headers=HEADERS, timeout=10)
     keep_original_links = "txt" == save_format or "md" == save_format

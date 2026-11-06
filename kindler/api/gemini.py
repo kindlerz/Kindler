@@ -23,6 +23,7 @@ from flask import (
 from markitdown import MarkItDown
 from pathvalidate import sanitize_filename
 
+from kindler.abuse import guard
 from kindler.gemini_converter import gemtext_to_html
 
 gemini_bp = Blueprint("gemini", __name__, url_prefix="/gemini")
@@ -83,6 +84,10 @@ def save_page():
         return "No URL provided", 400
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
+    if save_format in {"epub", "mobi", "azw3"}:
+        blocked = guard(url)
+        if blocked:
+            return blocked
 
     article = gemtext_to_html(get_gemini_content(url)["content"])
     html_content = render_template(
