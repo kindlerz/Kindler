@@ -96,6 +96,11 @@ def _client_key():
     return _normalise(cf_ip) or _normalise(request.remote_addr)
 
 
+def _short(url, limit=200):
+    """User-supplied URL for logs, truncated; %r at the call site escapes newlines."""
+    return url[:limit] if url else url
+
+
 def guard(url=None):
     """Return a redirect Response to reject the request, or None to continue."""
     try:
@@ -103,6 +108,9 @@ def guard(url=None):
         if key is None:
             logging.warning("No valid client IP found, allowing request")
             return None
+        logging.info(
+            "Conversion request from %s: path=%s url=%r", key, request.path, _short(url)
+        )
         if is_datacenter_or_vpn(key):
             return _reject(url, key, reason="network")
         block_key = f"block:{key}"
@@ -122,7 +130,13 @@ def guard(url=None):
 
 
 def _reject(url, key, reason=None):
-    logging.warning("Rejecting ebook conversion for %s (%s)", key, reason or "quota")
+    logging.warning(
+        "Rejecting ebook conversion for %s (%s): path=%s url=%r",
+        key,
+        reason or "quota",
+        request.path,
+        _short(url),
+    )
     if reason == "network":
         return redirect(url_for("error.error", status_code=403, reason=reason, url=url))
     return redirect(url_for("error.error", status_code=429, url=url))

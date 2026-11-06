@@ -255,3 +255,25 @@ def test_web_save_page_guards_only_ebook_formats(app, monkeypatch, fmt, expected
             with pytest.raises(RuntimeError):
                 web.save_page()
     assert len(calls) == expected_calls
+
+
+# ---- logging ----
+
+
+def test_logs_url_and_path_escaping_newlines(app, fake_redis, caplog):
+    caplog.set_level("INFO")
+    with app.test_request_context("/web/save_page", headers={"CF-Connecting-IP": IP}):
+        abuse.guard("http://example.com/a\nFAKE LOG LINE")
+    msg = next(
+        r.getMessage() for r in caplog.records if "Conversion request" in r.getMessage()
+    )
+    assert "path=/web/save_page" in msg
+    assert "http://example.com/a" in msg
+    assert "\n" not in msg
+
+
+def test_rejection_log_has_url(app, fake_redis, monkeypatch, caplog):
+    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
+    call_guard(app)
+    msg = next(r.getMessage() for r in caplog.records if "Rejecting" in r.getMessage())
+    assert "url='http://example.com'" in msg
