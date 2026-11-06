@@ -106,7 +106,7 @@ def guard(url=None):
         if blocked_reason is not None:
             return _reject(url, key, reason=blocked_reason.decode())
         if is_datacenter_or_vpn(key):
-            _redis.set(block_key, "network", ex=BLOCK_TTL_SECONDS)
+            _redis.set(block_key, "network")
             return _reject(url, key, reason="network")
         quota_key = f"quota:{key}:{datetime.now(timezone.utc):%Y-%m-%d}"
         pipe = _redis.pipeline(transaction=True)

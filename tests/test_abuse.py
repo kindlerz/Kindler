@@ -147,7 +147,7 @@ def test_datacenter_gets_403_network_and_block_key(app, fake_redis, monkeypatch)
     assert "status_code=403" in location(resp)
     assert "reason=network" in location(resp)
     assert fake_redis.get(f"block:{IP}") == b"network"
-    assert 48 * 3600 - 10 <= fake_redis.ttl(f"block:{IP}") <= 48 * 3600
+    assert fake_redis.ttl(f"block:{IP}") == -1  # permanent: no expiry
 
 
 def test_network_block_persists_even_if_no_longer_datacenter(
