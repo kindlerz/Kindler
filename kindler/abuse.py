@@ -101,20 +101,18 @@ def guard(url=None):
         if key is None:
             logging.warning("No valid client IP found, allowing request")
             return None
-        block_key = f"block:{key}"
-        blocked_reason = _redis.get(block_key)
-        if blocked_reason is not None:
-            return _reject(url, key, reason=blocked_reason.decode())
         if is_datacenter_or_vpn(key):
-            _redis.set(block_key, "network")
             return _reject(url, key, reason="network")
+        block_key = f"block:{key}"
+        if _redis.exists(block_key):
+            return _reject(url, key)
         quota_key = f"quota:{key}:{datetime.now(timezone.utc):%Y-%m-%d}"
         pipe = _redis.pipeline(transaction=True)
         pipe.incr(quota_key)
         pipe.expire(quota_key, BLOCK_TTL_SECONDS)
         count = pipe.execute()[0]
         if count > DAILY_QUOTA:
-            _redis.set(block_key, "quota", ex=BLOCK_TTL_SECONDS, nx=True)
+            _redis.set(block_key, 1, ex=BLOCK_TTL_SECONDS, nx=True)
             return _reject(url, key)
     except Exception as e:
         logging.error(f"Abuse guard failed, allowing request: {e}")

@@ -87,7 +87,7 @@ def test_first_ten_pass_eleventh_rejected_429_and_sets_block(app, fake_redis):
     resp = call_guard(app)
     assert resp is not None and resp.status_code == 302
     assert "status_code=429" in location(resp)
-    assert fake_redis.get(f"block:{IP}") == b"quota"
+    assert fake_redis.get(f"block:{IP}") == b"1"
 
 
 def test_later_requests_blocked_with_429(app, fake_redis):
@@ -141,33 +141,27 @@ def test_block_key_ttl_about_48h(app, fake_redis):
 # ---- guard: datacenter/VPN ----
 
 
-def test_datacenter_gets_403_network_and_block_key(app, fake_redis, monkeypatch):
+def test_datacenter_gets_403_network_and_nothing_stored(app, fake_redis, monkeypatch):
     monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
     resp = call_guard(app)
     assert "status_code=403" in location(resp)
     assert "reason=network" in location(resp)
-    assert fake_redis.get(f"block:{IP}") == b"network"
-    assert fake_redis.ttl(f"block:{IP}") == -1  # permanent: no expiry
+    assert fake_redis.keys("*") == []
 
 
-def test_network_block_persists_even_if_no_longer_datacenter(
-    app, fake_redis, monkeypatch
-):
-    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
-    call_guard(app)
-    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: False)
-    resp = call_guard(app)
-    assert "status_code=403" in location(resp)
-    assert "reason=network" in location(resp)
-    assert "429" not in location(resp)
-
-
-def test_network_block_not_overwritten_by_quota(app, fake_redis, monkeypatch):
+def test_datacenter_never_consumes_quota(app, fake_redis, monkeypatch):
     monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
     for _ in range(15):
-        call_guard(app)
-    assert fake_redis.get(f"block:{IP}") == b"network"
-    assert fake_redis.get(f"quota:{IP}:{datetime.now(timezone.utc):%Y-%m-%d}") is None
+        resp = call_guard(app)
+        assert "status_code=403" in location(resp)
+    assert fake_redis.keys("*") == []
+
+
+def test_delisted_ip_is_allowed_again(app, fake_redis, monkeypatch):
+    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
+    assert call_guard(app) is not None
+    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: False)
+    assert call_guard(app) is None
 
 
 # ---- guard: failure mode ----

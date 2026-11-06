@@ -86,4 +86,4 @@ def test_guard_redirects_listed_ip_to_403(app, fake_redis, lists):
     assert resp.status_code == 302
     assert "403" in resp.headers["Location"]
     assert "reason=network" in resp.headers["Location"]
-    assert fake_redis.get("block:10.0.0.5") == b"network"
+    assert fake_redis.keys("*") == []
