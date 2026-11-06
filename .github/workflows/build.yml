@@ -24,10 +24,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt -r requirements-dev.txt
     - name: Check code formatting with Black
       run: |
         black --check .
+    - name: Run tests
+      run: |
+        python -m pytest tests -q
     - name: Check app starts
       run: |
         python -m kindler.app --port 5000 &

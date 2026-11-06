@@ -6,6 +6,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY kindler ./kindler
+COPY util/download_ip_lists.py ./util/
+RUN python util/download_ip_lists.py /app/kindler/data
 COPY scripts/index_with_summary.csv ./scripts/
 
 EXPOSE 8181

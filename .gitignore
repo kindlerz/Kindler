@@ -211,3 +211,6 @@ __marimo__/
 
 # Mac
 .DS_Store
+
+# Datacenter/VPN IP lists (fetched at image build time)
+kindler/data/

@@ -25,6 +25,7 @@ from kindler.integration.metasearch import (
     Provider,
     get_book_details,
 )
+from kindler.abuse import guard
 from kindler.util import is_blob_content
 
 gutenberg_au_bp = Blueprint("gutenberg_au", __name__, url_prefix="/gutenberg_au")
@@ -104,6 +105,10 @@ def save_page():
     save_format = request.args.get("format", "html")
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
+    if save_format in {"epub", "mobi", "azw3"}:
+        blocked = guard(url)
+        if blocked:
+            return blocked
     req = requests.get(url, timeout=10)
     if "html" == save_format:
         article = get_python_readability_result(req.text, book_details, url, None)

@@ -15,6 +15,8 @@ from flask import redirect, url_for
 from flask import render_template, Blueprint, request, Response, send_file, abort
 from pathvalidate import sanitize_filename
 
+from kindler.abuse import guard
+
 wikipedia_bp = Blueprint("wikipedia", __name__, url_prefix="/wikipedia")
 
 USER_AGENT_NAME = "Kindler (kasra@madadipouya.com)"
@@ -77,6 +79,10 @@ def save_page():
         return "No page is provided", 400
     if save_format not in allowed_formats:
         abort(400, "Invalid format")
+    if save_format in {"epub", "mobi", "azw3"}:
+        blocked = guard(url)
+        if blocked:
+            return blocked
 
     keep_original_links = "txt" == save_format or "md" == save_format
     title = unquote(url.split("/")[-1]) if url else query
