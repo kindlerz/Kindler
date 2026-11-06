@@ -1,2 +1,2 @@
-pytest
-fakeredis
+pytest==9.2.0
+fakeredis==2.40.0
