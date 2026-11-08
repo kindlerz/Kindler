@@ -18,6 +18,7 @@ from readabilipy import simple_json_from_html_string
 from readability import Document
 
 from kindler.abuse import guard
+from kindler.api.wikipedia import get_wikipedia_article, wikipedia_title
 from kindler.util import is_blob_content
 
 web_bp = Blueprint("web", __name__, url_prefix="/web")
@@ -59,6 +60,25 @@ def readability_page():
         logging.warning("Readability URL is empty.")
         return redirect(url_for("error.error", status_code=400, url=url))
     try:
+        wiki_title = None if alternative_renderer else wikipedia_title(url)
+        article = None
+        if wiki_title:
+            try:
+                article = get_wikipedia_article(
+                    wiki_title, False, link_for=lambda t: web_wikipedia_link(t, query)
+                )
+            except Exception:
+                logging.exception("Wikipedia rendering failed, using generic renderer")
+        if article:
+            return render_template(
+                "read_web.html",
+                title=article["title"],
+                query=query,
+                content=article["content"],
+                url=url,
+                alternative_renderer=None,
+                save_endpoint="wikipedia.save_page",
+            )
         is_blob, req = is_blob_content(url)
         if is_blob:
             return redirect(url)
@@ -182,6 +202,11 @@ def save_page():
             if os.path.exists(output_file):
                 os.remove(output_file)
             abort(500, f"Conversion failed: {e}")
+
+
+def web_wikipedia_link(title, query):
+    wiki_url = "https://en.wikipedia.org/wiki/" + quote(title.replace(" ", "_"))
+    return url_for("web.readability_page", q=query, url=wiki_url)
 
 
 def get_python_readability_result(html_content, base_url, query, keep_original_links):
