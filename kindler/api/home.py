@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, Response
+from flask import render_template, Blueprint, Response, current_app, send_from_directory
 
 home_bp = Blueprint("home", __name__)
 
@@ -18,3 +18,8 @@ def home():
 @home_bp.route("/robots.txt")
 def robots():
     return Response(ROBOTS_TXT, mimetype="text/plain")
+
+
+@home_bp.route("/favicon.ico")
+def favicon():
+    return send_from_directory(current_app.static_folder, "favicon.ico")

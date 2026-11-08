@@ -1,17 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Kindler Front Page</title>
-    <style>
-
-
-    </style>
-</head>
-<body class="home">
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/solid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/brands.min.css') }}">
+{% endblock %}
+{% block title %}Kindler Front Page{% endblock %}
+{% block body_attrs %} class="home"{% endblock %}
+{% block content %}
 <h2><i class="fa-solid fa-globe"></i> Kindler Front Page</h2>
 <table class="app-table">
     <tr>
@@ -25,8 +20,8 @@
         <td><a href="{{ url_for('standard_ebooks.home') }}" class="app-icon"><i class="fa-solid fa-book"></i><small>Standard Ebooks</small></a></td>
     </tr>
     <tr>
-        <td><a href="{{ url_for('wikipedia.home') }}" class="app-icon"><i class="fa-solid fa-brands fa-wikipedia-w"></i><small>Wikipedia</small></a></td>
-        <td><a href="{{ url_for('youtube.home') }}" class="app-icon"><i class="fa-solid fa-brands fa-youtube"></i><small>YouTube</small></a></td>
+        <td><a href="{{ url_for('wikipedia.home') }}" class="app-icon"><i class="fa-brands fa-wikipedia-w"></i><small>Wikipedia</small></a></td>
+        <td><a href="{{ url_for('youtube.home') }}" class="app-icon"><i class="fa-brands fa-youtube"></i><small>YouTube</small></a></td>
         <td></td>
     </tr>
     <tr>
@@ -35,5 +30,4 @@
         </td>
     </tr>
 </table>
-</body>
-</html>
+{% endblock %}

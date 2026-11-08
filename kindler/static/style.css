@@ -1,8 +1,9 @@
 body {
     background-color: #f0f0f0;
-    font-family: serif;
+    font-family: Georgia, serif;
     line-height: 1.5;
     width: 90%;
+    max-width: 44em;
     margin: 1em auto;
     font-size: 1.2em;
 }
@@ -29,11 +30,11 @@ form {
     white-space: nowrap;
 }
 .top-nav a,
-.top-nav input[type="text"] {
+.top-nav .field {
     font-size: 1.2em;
 }
 
-.top-nav input[type="submit"] {
+.top-nav .btn {
     font-size: 1.2em;
     margin-right: 0.5em;
 }
@@ -54,10 +55,32 @@ form {
 }
 
 .download-links a {
-    margin-right: 0.5em;
+    display: inline-block;
+    margin: 0 0.5em 0.6em 0;
+    padding: 0.6em 1em;
+    background-color: #ddd;
+    border: 1px solid #999;
+    border-radius: 0.3em;
+    font-weight: bold;
+    color: black;
+    text-decoration: none;
 }
 
-input[type="text"] {
+.download-links a:hover {
+    background-color: #ccc;
+}
+
+.source-url {
+    font-family: monospace;
+    word-wrap: break-word;
+}
+
+.content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.field {
     font-size: 1.2em;
     padding: 0.6em;
     width: 85%;
@@ -69,7 +92,7 @@ input[type="text"] {
     background-color: #fafafa;
 }
 
-input[type="submit"] {
+.btn {
     font-size: 1.2em;
     padding: 0.6em 1.2em;
     cursor: pointer;
@@ -80,7 +103,7 @@ input[type="submit"] {
     transition: background-color 0.2s ease-in-out; /* Kindle ignores transitions, safe to include */
 }
 
-input[type="submit"]:hover {
+.btn:hover {
     background-color: #ccc;
 }
 
@@ -123,19 +146,20 @@ small, time {
     font-style: italic;
 }
 
-.library-table {
+.library {
     margin: 1em auto;
-    border-spacing: 1em;
-}
-
-.library-table td {
     text-align: center;
-    width: 200px;
-    padding-bottom: 1em;
-    vertical-align: top;
 }
 
-.library-table td img {
+.book {
+    display: inline-block;
+    vertical-align: top;
+    width: 200px;
+    margin: 0 0.5em 1.5em;
+    text-align: center;
+}
+
+.book img {
     width: 200px;
     height: 300px;
     object-fit: cover;
@@ -143,12 +167,12 @@ small, time {
     margin: 0 auto;
 }
 
-.library-table td a {
+.book a {
     display: block;
     text-align: center;
 }
 
-.library-table td a small {
+.book a small {
     display: block;
     margin-top: 0.3em;
     white-space: normal;
@@ -157,13 +181,6 @@ small, time {
     font-style: italic;
     color: #333;
 }
-
-.library-table tr hr {
-    border: none;
-    border-top: 1px solid #ccc;
-    margin: 1em 0;
-}
-
 
 .h1-ebook {
     font-size: 1.5em;
@@ -211,7 +228,7 @@ small, time {
     text-decoration: none;
     color: black;
     font-weight: bold;
-    font-family: serif;
+    font-family: Georgia, serif;
     padding-top: 1.4em;
     box-sizing: border-box;
 }
@@ -291,7 +308,7 @@ a.retry:hover {
 }
 
 .youtube-title {
-    font-family: serif;
+    font-family: Georgia, serif;
     font-size: 1.2em;
     color: #000;
     display: block;
@@ -314,7 +331,7 @@ a.retry:hover {
 }
 
 .youtube-description {
-  font-family: serif;
+  font-family: Georgia, serif;
   font-size: .8em;
   color: #000;
   display: block;
@@ -380,7 +397,7 @@ a.retry:hover {
     background-color: #fafafa;
     border: 1px solid #999;
     text-decoration: none;
-    font-family: serif;
+    font-family: Georgia, serif;
     color: black;
     font-size: 1.0em;
     border-radius: 0.3em;
@@ -413,7 +430,7 @@ a.retry:hover {
 }
 
 .youtube-player-description {
-  font-family: serif;
+  font-family: Georgia, serif;
   font-size: 0.9em;
   color: #000;
   display: block;

@@ -1,0 +1,22 @@
+/* Loaded only by IE6/7 via a conditional comment in base.html. */
+
+/* IE6/7 only honour inline-block on elements that are inline by default;
+   "display: inline; zoom: 1" triggers hasLayout and behaves the same. */
+.top-nav form {
+    display: inline;
+    zoom: 1;
+}
+
+.book {
+    display: inline;
+    zoom: 1;
+}
+
+.source-url {
+    zoom: 1;
+}
+
+/* IE6 has no max-width: use a fixed width that fits 800x600 at 1.2em. */
+* html body {
+    width: 38em;
+}

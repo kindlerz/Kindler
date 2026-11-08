@@ -1,20 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>{{ book['title'] }}</title>
-</head>
-<body>
-    <div class="top-nav">
-        <a href="{{ url_for('home.home') }}">Home</a>
-        <form action="{{ url_for('gutenberg.search') }}" method="get">
-            <input type="text" id="q" name="q" value="{{ query }}">
-            <input type="submit" value="Search">
-        </form>
-    </div>
-    <hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}{{ book['title'] }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('gutenberg.search'), query) }}
     <div class="source-info">
         <p class="download-links">
             {% if book['formats']['text/plain; charset=us-ascii'] %}
@@ -32,5 +20,4 @@
     <h1 class="h1-ebook">{{ book['title'] }}</h1>
     <h2 class="h2-ebook">by {{ book['authors'] | map(attribute='name') | join(', ') }}</h2>
     <p>{{ book['summaries'][0] }}</p>
-</body>
-</html>
+{% endblock %}

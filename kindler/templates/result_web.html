@@ -1,20 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Search Results</title>
-</head>
-<body>
-    <div class="top-nav">
-        <a href="{{ url_for('home.home') }}">Home</a>
-        <form action="{{ url_for('web.search') }}" method="get">
-            <input type="text" id="q" name="q" value="{{ query }}">
-            <input type="submit" value="Search">
-        </form>
-    </div>
-    <hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}Search Results{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('web.search'), query) }}
     {% for result in results %}
         <div class="content">
             <b><a href="{{ url_for('web.readability_page', url=result['href'], q=query) }}">
@@ -25,5 +13,4 @@
         </div>
         <hr>
     {% endfor %}
-</body>
-</html>
+{% endblock %}

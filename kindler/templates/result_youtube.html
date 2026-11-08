@@ -1,20 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>YouTube Results - {{ query }}</title>
-</head>
-<body>
-<div class="top-nav">
-    <a href="{{ url_for('home.home') }}">Home</a>
-    <form action="{{ url_for('youtube.search') }}" method="get">
-        <input type="text" id="q" name="q" value="{{ query }}">
-        <input type="submit" value="Search">
-    </form>
-</div>
-<hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}YouTube Results - {{ query }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('youtube.search'), query) }}
 <table class="youtube-table">
     {% for result in results %}
     <tr>
@@ -67,5 +55,4 @@
     </tr>
     {% endfor %}
 </table>
-</body>
-</html>
+{% endblock %}

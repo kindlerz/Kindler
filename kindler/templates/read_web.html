@@ -1,22 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>{{ title | safe }}</title>
-</head>
-<body>
-    <div class="top-nav">
-        <a href="{{ url_for('home.home') }}">Home</a>
-        <form action="{{ url_for('web.search') }}" method="get">
-            <input type="text" id="q" name="q" value="{{ query }}">
-            <input type="submit" value="Search">
-        </form>
-    </div>
-    <hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}{{ title | safe }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('web.search'), query) }}
     <div class="source-info">
-        <pre style="white-space: pre-wrap; word-wrap: break-word;">Original Source: <a href="{{ url }}">{{ url }}</a></pre>
+        <p class="source-url">Original Source: <a href="{{ url }}">{{ url }}</a></p>
         <p class="download-links">
             <a href="{{ url_for('web.save_page', url=url, format='html', q=query, alternative_renderer=alternative_renderer) }}">[.html]</a>
             <a href="{{ url_for('web.save_page', url=url, format='txt', q=query, alternative_renderer=alternative_renderer) }}">[.txt]</a>
@@ -31,5 +19,4 @@
     <div class="content">
         {{ content | safe }}
     </div>
-</body>
-</html>
+{% endblock %}

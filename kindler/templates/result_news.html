@@ -1,15 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Kindler News - {{category}}</title>
-</head>
-<body>
-    <div class="top-nav">
-        <a href="{{ url_for('home.home') }}">Home</a>
-        <form action="{{ url_for('news.search') }}" method="get">
+{% extends "base.html" %}
+{% from "_macros.html" import top_nav %}
+{% block title %}Kindler News - {{category}}{% endblock %}
+{% block content %}
+    {% call top_nav(url_for('news.search')) %}
             <select class="drop-down" id="news-category" name="news-category">
                 {% set options = [('top', 'World Top News'), ('usa-en', 'USA'),
                 ('germany-en', 'Germany (EN)'), ('germany-de', 'Germany (DE)'),
@@ -20,10 +13,8 @@
                     </option>
                 {% endfor %}
             </select>
-            <input type="submit" value="Get News">
-        </form>
-    </div>
-    <hr>
+            <input type="submit" value="Get News" class="btn">
+    {% endcall %}
     {% for result in results %}
         <div class="content">
             <b><a href="{{ url_for('news.readability_page', url=result['link'], q='') }}">
@@ -33,5 +24,4 @@
         </div>
         <hr>
     {% endfor %}
-</body>
-</html>
+{% endblock %}
