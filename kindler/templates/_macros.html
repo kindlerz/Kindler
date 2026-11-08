@@ -1,0 +1,18 @@
+{# Top navigation: Home link plus a form. The caller supplies the form fields. #}
+{% macro top_nav(action) %}
+    <div class="top-nav">
+        <a href="{{ url_for('home.home') }}">Home</a>
+        <form action="{{ action }}" method="get">
+            {{ caller() }}
+        </form>
+    </div>
+    <hr>
+{% endmacro %}
+
+{# Top navigation with the standard search box. #}
+{% macro search_nav(action, query) %}
+    {% call top_nav(action) %}
+        <input type="text" id="q" name="q" value="{{ query }}" class="field">
+        <input type="submit" value="Search" class="btn">
+    {% endcall %}
+{% endmacro %}

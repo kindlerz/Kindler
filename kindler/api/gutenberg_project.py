@@ -3,6 +3,7 @@ import logging
 from flask import render_template, Blueprint, request
 
 from kindler.config import GUTENDEX_THIRD_PARTY_URL, GUTENDEX_SELF_HOST_URL
+from kindler.util import cover_response
 
 gutenberg_bp = Blueprint("gutenberg", __name__, url_prefix="/gutenberg")
 
@@ -27,6 +28,13 @@ def readability_page():
     book_id = request.args.get("id")
     response = retrieve_book_details_by_id_from_gutendex_api(book_id).json()
     return render_template("read_gutenberg.html", query=query, book=response)
+
+
+@gutenberg_bp.route("/cover/<int:book_id>.jpg")
+def cover(book_id):
+    return cover_response(
+        f"https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.cover.medium.jpg"
+    )
 
 
 def search_book_from_gutendex_api(query):

@@ -1,27 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Gutenberg Results - {{ query }}</title>
-</head>
-<body>
-    <div class="top-nav">
-        <a href="{{ url_for('home.home') }}">Home</a>
-        <form action="{{ url_for('gutenberg.search') }}" method="get">
-            <input type="text" id="q" name="q" value="{{ query }}">
-            <input type="submit" value="Search">
-        </form>
-    </div>
-    <hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}Gutenberg Results - {{ query }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('gutenberg.search'), query) }}
     <table class="library-table">
         <tr>
             {% for result in results %}
             {% set author_names = result['authors'] | map(attribute='name') %}
             <td>
                 <a href="{{ url_for('gutenberg.readability_page', id=result['id'], q=query) }}">
-                <img src="{{ result['formats']['image/jpeg'] }}" alt="{{ result['title'] }}">
+                <img src="{% if result['formats']['image/jpeg'] %}{{ url_for('gutenberg.cover', book_id=result['id']) }}{% else %}{{ result['formats']['image/jpeg'] }}{% endif %}" alt="{{ result['title'] }}">
                 <small>{{ author_names | join(', ') }}</small>
                 </a>
             </td>
@@ -33,5 +21,4 @@
             {% endfor %}
         </tr>
     </table>
-</body>
-</html>
+{% endblock %}

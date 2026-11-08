@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Kindler News</title>
-</head>
-<body class="home">
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/solid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/brands.min.css') }}">
+{% endblock %}
+{% block title %}Kindler News{% endblock %}
+{% block body_attrs %} class="home"{% endblock %}
+{% block content %}
 <h2><i class="fa-solid fa-newspaper"></i> Kindler News</h2>
 <form action="{{ url_for('news.search') }}" method="get">
     <select class="drop-down" id="news-category" name="news-category">
@@ -21,7 +20,6 @@
         {% endfor %}
     </select>
     <br>
-    <input type="submit" value="Get News">
+    <input type="submit" value="Get News" class="btn">
 </form>
-</body>
-</html>
+{% endblock %}

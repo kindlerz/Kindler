@@ -1,32 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>{{ video['title'] }}</title>
-</head>
-<body>
-
-<div class="top-nav">
-    <a href="{{ url_for('home.home') }}">Home</a>
-    <form action="{{ url_for('youtube.search') }}" method="get">
-        <input type="text" id="q" name="q" value="{{ query }}">
-        <input type="submit" value="Search">
-    </form>
-</div>
-
-<hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/solid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/brands.min.css') }}">
+{% endblock %}
+{% block title %}{{ video['title'] }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('youtube.search'), query) }}
 
 <p align="center">
     {% if video['play_http'] %}
         <video width="640" height="360" src="{{ video['video_play_url_http'] }}" controls>
-            Cannot play
+            Cannot play the video here. <a href="{{ video['video_play_url_http'] }}">Open the video directly</a>.
         </video>
     {% else %}
         <video width="640" height="360" src="{{ video['video_play_url'] }}" controls>
-            Cannot play
+            Cannot play the video here. <a href="{{ video['video_play_url'] }}">Open the video directly</a>.
         </video>
     {% endif %}
 </p>
@@ -62,5 +52,4 @@
 <p class="youtube-player-description">
     {{ video['description'] | safe }}
 </p>
-</body>
-</html>
+{% endblock %}

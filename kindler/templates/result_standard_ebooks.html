@@ -1,26 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Standard Ebooks Results - {{ query }}</title>
-</head>
-<body>
-    <div class="top-nav">
-        <a href="{{ url_for('home.home') }}">Home</a>
-        <form action="{{ url_for('standard_ebooks.search') }}" method="get">
-            <input type="text" id="q" name="q" value="{{ query }}">
-            <input type="submit" value="Search">
-        </form>
-    </div>
-    <hr>
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}Standard Ebooks Results - {{ query }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('standard_ebooks.search'), query) }}
     <table class="library-table">
         <tr>
             {% for result in results %}
+            {% set cover = result['coverImageUrl'] %}
+            {% set se_prefix = se_host ~ '/' %}
             <td>
                 <a href="{{ url_for('standard_ebooks.readability_page', id=result['id'], q=query) }}">
-                <img src="{{ result['coverImageUrl'] }}" alt="{{ result['title'] }}">
+                <img src="{% if cover and cover.startswith(se_prefix) %}{{ url_for('standard_ebooks.cover', path=cover[se_prefix|length:]) }}{% else %}{{ cover }}{% endif %}" alt="{{ result['title'] }}">
                 <small>{{ result['author'] }}</small>
                 </a>
             </td>
@@ -32,5 +22,4 @@
             {% endfor %}
         </tr>
     </table>
-</body>
-</html>
+{% endblock %}

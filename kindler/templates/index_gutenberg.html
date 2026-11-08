@@ -1,18 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="HandheldFriendly" content="true">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Kindler Gutenberg</title>
-</head>
-<body class="home">
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/solid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/brands.min.css') }}">
+{% endblock %}
+{% block title %}Kindler Gutenberg{% endblock %}
+{% block body_attrs %} class="home"{% endblock %}
+{% block content %}
 <h2><i class="fa-solid fa-book"></i> Kindler Gutenberg</h2>
 <form action="{{ url_for('gutenberg.search') }}" method="get">
-        <input id="input_text" type="text" name="q" placeholder="Search project Gutenberg...">
+        <input id="input_text" type="text" class="field" name="q" placeholder="Search project Gutenberg...">
         <br>
-        <input type="submit" value="Search">
+        <input type="submit" value="Search" class="btn">
     </form>
-</body>
-</html>
+{% endblock %}
