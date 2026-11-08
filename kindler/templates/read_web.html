@@ -6,12 +6,12 @@
     <div class="source-info">
         <p class="source-url">Original Source: <a href="{{ url }}">{{ url }}</a></p>
         <p class="download-links">
-            <a href="{{ url_for('web.save_page', url=url, format='html', q=query, alternative_renderer=alternative_renderer) }}">[.html]</a>
-            <a href="{{ url_for('web.save_page', url=url, format='txt', q=query, alternative_renderer=alternative_renderer) }}">[.txt]</a>
-            <a href="{{ url_for('web.save_page', url=url, format='md', q=query, alternative_renderer=alternative_renderer) }}">[.md]</a>
-            <a href="{{ url_for('web.save_page', url=url, format='epub', q=query, alternative_renderer=alternative_renderer) }}">[.epub]</a>
-            <a href="{{ url_for('web.save_page', url=url, format='mobi', q=query, alternative_renderer=alternative_renderer) }}">[.mobi]</a>
-            <a href="{{ url_for('web.save_page', url=url, format='azw3', q=query, alternative_renderer=alternative_renderer) }}">[.azw3]</a>
+            <a href="{{ url_for(save_endpoint or 'web.save_page', url=url, format='html', q=query, alternative_renderer=alternative_renderer) }}">[.html]</a>
+            <a href="{{ url_for(save_endpoint or 'web.save_page', url=url, format='txt', q=query, alternative_renderer=alternative_renderer) }}">[.txt]</a>
+            <a href="{{ url_for(save_endpoint or 'web.save_page', url=url, format='md', q=query, alternative_renderer=alternative_renderer) }}">[.md]</a>
+            <a href="{{ url_for(save_endpoint or 'web.save_page', url=url, format='epub', q=query, alternative_renderer=alternative_renderer) }}">[.epub]</a>
+            <a href="{{ url_for(save_endpoint or 'web.save_page', url=url, format='mobi', q=query, alternative_renderer=alternative_renderer) }}">[.mobi]</a>
+            <a href="{{ url_for(save_endpoint or 'web.save_page', url=url, format='azw3', q=query, alternative_renderer=alternative_renderer) }}">[.azw3]</a>
             <a href="{{ url_for('web.readability_page', url=url, alternative_renderer=True, q=query) }}">[alternative renderer]</a>
         </p>
     </div>

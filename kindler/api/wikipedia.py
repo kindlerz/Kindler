@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import re
 import textwrap
-from urllib.parse import quote, unquote
+from urllib.parse import quote, unquote, urlsplit
 
 from ddgs import DDGS
 from markitdown import MarkItDown
@@ -56,7 +56,7 @@ def search():
 def readability_page():
     query = request.args.get("q")
     url = request.args.get("url")
-    title = unquote(url.split("/")[-1]) if url else query
+    title = title_from_url(url) if url else query
     article = get_wikipedia_article(title, False)
     if article is None:
         logging.warning(f"Wikipedia article not found for title: {title}")
@@ -85,7 +85,7 @@ def save_page():
             return blocked
 
     keep_original_links = "txt" == save_format or "md" == save_format
-    title = unquote(url.split("/")[-1]) if url else query
+    title = title_from_url(url) if url else query
     article = get_wikipedia_article_with_cover_image(title, keep_original_links)
     if article is None:
         logging.warning(f"Wikipedia article not found for title: {title}")
@@ -178,26 +178,77 @@ def get_wikipedia_article_with_cover_image(query, keep_original_links):
     return article
 
 
-def get_wikipedia_article(query, keep_original_links):
+NON_ARTICLE_NAMESPACES = {
+    "talk",
+    "user",
+    "wikipedia",
+    "wp",
+    "project",
+    "file",
+    "image",
+    "media",
+    "mediawiki",
+    "template",
+    "help",
+    "category",
+    "portal",
+    "draft",
+    "module",
+    "special",
+    "timedtext",
+}
+
+
+def title_from_url(url):
+    # /wikipedia gets decoded URLs (read_wikipedia.html unquotes them), so a `?`
+    # belongs to the title; `#` can't be in a title, so it starts a fragment.
+    path = url.partition("/wiki/")[2] or url.split("/")[-1]
+    return unquote(path.split("#")[0])
+
+
+def wikipedia_title(url):
+    """Article title for an encoded English Wikipedia article URL, else None."""
+    parsed = urlsplit(url or "")  # urlparse would drop ";..." from the path
+    # `wiki` only queries en.wikipedia.org
+    if parsed.hostname not in ("en.wikipedia.org", "en.m.wikipedia.org"):
+        return None
+    # ?oldid=, ?diff=, ?action=history are not the current article
+    if parsed.query or not parsed.path.startswith("/wiki/"):
+        return None
+    title = unquote(parsed.path[len("/wiki/") :]).replace("_", " ")
+    namespace = title.split(":", 1)[0].strip().lower() if ":" in title else ""
+    if namespace in NON_ARTICLE_NAMESPACES or namespace.endswith(" talk"):
+        return None
+    return title or None
+
+
+def get_wikipedia_article(
+    query,
+    keep_original_links,
+    link_for=lambda title: url_for("wikipedia.readability_page", q=title),
+):
     result = wiki.page(query)
     if not result.exists():
         return None
     article = {}
     links = result.links
     content = result.text
-    for title in links.keys():
+    linked = set()
+
+    def link(match):
+        title = match.group(0)
+        if title in linked:
+            return title
+        linked.add(title)
         if keep_original_links:
-            content = content.replace(
-                title,
-                f"<a href='http://wikipedia.org/wiki/{title}'>{title}</a>",
-                1,
-            )
-        else:
-            content = content.replace(
-                title,
-                f"<a href={url_for("wikipedia.readability_page", q=title)}>{title}</a>",
-                1,
-            )
+            href = "http://wikipedia.org/wiki/" + quote(title.replace(" ", "_"))
+            return f"<a href='{href}'>{title}</a>"
+        return f"<a href={link_for(title)}>{title}</a>"
+
+    # one pass, longest title first, so inserted anchors are never rescanned
+    if links:
+        titles = sorted(links, key=len, reverse=True)
+        content = re.sub("|".join(map(re.escape, titles)), link, content)
     article["content"] = content
     article["title"] = result.title
     article["url"] = result.fullurl
