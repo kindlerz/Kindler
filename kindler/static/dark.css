@@ -9,7 +9,7 @@
     a:visited { color: #c58af9; }
 
     small, time,
-    .book a small,
+    .library-table td a small,
     .h2-ebook,
     .h2-error,
     .youtube-player-meta {

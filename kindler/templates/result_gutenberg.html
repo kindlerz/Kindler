@@ -3,15 +3,22 @@
 {% block title %}Gutenberg Results - {{ query }}{% endblock %}
 {% block content %}
     {{ search_nav(url_for('gutenberg.search'), query) }}
-    <div class="library">
-        {% for result in results %}
-        {% set author_names = result['authors'] | map(attribute='name') %}
-        <div class="book">
-            <a href="{{ url_for('gutenberg.readability_page', id=result['id'], q=query) }}">
+    <table class="library-table">
+        <tr>
+            {% for result in results %}
+            {% set author_names = result['authors'] | map(attribute='name') %}
+            <td>
+                <a href="{{ url_for('gutenberg.readability_page', id=result['id'], q=query) }}">
                 <img src="{% if result['formats']['image/jpeg'] %}{{ url_for('gutenberg.cover', book_id=result['id']) }}{% else %}{{ result['formats']['image/jpeg'] }}{% endif %}" alt="{{ result['title'] }}">
                 <small>{{ author_names | join(', ') }}</small>
-            </a>
-        </div>
-        {% endfor %}
-    </div>
+                </a>
+            </td>
+            {% if loop.index % 3 == 0 and not loop.last %}
+        </tr>
+        <tr><td colspan="3"><hr></td></tr>
+        <tr>
+            {% endif %}
+            {% endfor %}
+        </tr>
+    </table>
 {% endblock %}

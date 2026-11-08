@@ -146,20 +146,19 @@ small, time {
     font-style: italic;
 }
 
-.library {
+.library-table {
     margin: 1em auto;
-    text-align: center;
+    border-spacing: 1em;
 }
 
-.book {
-    display: inline-block;
-    vertical-align: top;
+.library-table td {
+    text-align: center;
     width: 200px;
-    margin: 0 0.5em 1.5em;
-    text-align: center;
+    padding-bottom: 1em;
+    vertical-align: top;
 }
 
-.book img {
+.library-table td img {
     width: 200px;
     height: 300px;
     object-fit: cover;
@@ -167,12 +166,12 @@ small, time {
     margin: 0 auto;
 }
 
-.book a {
+.library-table td a {
     display: block;
     text-align: center;
 }
 
-.book a small {
+.library-table td a small {
     display: block;
     margin-top: 0.3em;
     white-space: normal;
@@ -181,6 +180,13 @@ small, time {
     font-style: italic;
     color: #333;
 }
+
+.library-table tr hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 1em 0;
+}
+
 
 .h1-ebook {
     font-size: 1.5em;

@@ -3,19 +3,26 @@
 {% block title %}Gutenberg Australia Results - {{ query }}{% endblock %}
 {% block content %}
     {{ search_nav(url_for('gutenberg_au.search'), query) }}
-    <div class="library">
-        {% for result in results %}
-        <div class="book">
-            <a href="{{ url_for('gutenberg_au.readability_page', id=result['id'], q=query) }}">
-                {% if result['coverImageUrl'] %}
-                    <img src="{{ result['coverImageUrl'] }}" alt="{{ result['title'] }}">
-                    <small>{{ result['author'] }}</small>
-                {% else %}
-                    <small>{{ result['author'] }}</small>
-                    <small>{{ result['title'] }}</small>
-                {% endif %}
-            </a>
-        </div>
-        {% endfor %}
-    </div>
+    <table class="library-table">
+        <tr>
+            {% for result in results %}
+            <td>
+                <a href="{{ url_for('gutenberg_au.readability_page', id=result['id'], q=query) }}">
+                    {% if result['coverImageUrl'] %}
+                        <img src="{{ result['coverImageUrl'] }}" alt="{{ result['title'] }}">
+                        <small>{{ result['author'] }}</small>
+                    {% else %}
+                        <small>{{ result['author'] }}</small>
+                        <small>{{ result['title'] }}</small>
+                    {% endif %}
+                </a>
+            </td>
+            {% if loop.index % 3 == 0 and not loop.last %}
+        </tr>
+        <tr><td colspan="3"><hr></td></tr>
+        <tr>
+            {% endif %}
+            {% endfor %}
+        </tr>
+    </table>
 {% endblock %}

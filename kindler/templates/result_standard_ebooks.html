@@ -3,16 +3,23 @@
 {% block title %}Standard Ebooks Results - {{ query }}{% endblock %}
 {% block content %}
     {{ search_nav(url_for('standard_ebooks.search'), query) }}
-    <div class="library">
-        {% for result in results %}
-        {% set cover = result['coverImageUrl'] %}
-        {% set se_prefix = se_host ~ '/' %}
-        <div class="book">
-            <a href="{{ url_for('standard_ebooks.readability_page', id=result['id'], q=query) }}">
+    <table class="library-table">
+        <tr>
+            {% for result in results %}
+            {% set cover = result['coverImageUrl'] %}
+            {% set se_prefix = se_host ~ '/' %}
+            <td>
+                <a href="{{ url_for('standard_ebooks.readability_page', id=result['id'], q=query) }}">
                 <img src="{% if cover and cover.startswith(se_prefix) %}{{ url_for('standard_ebooks.cover', path=cover[se_prefix|length:]) }}{% else %}{{ cover }}{% endif %}" alt="{{ result['title'] }}">
                 <small>{{ result['author'] }}</small>
-            </a>
-        </div>
-        {% endfor %}
-    </div>
+                </a>
+            </td>
+            {% if loop.index % 3 == 0 and not loop.last %}
+        </tr>
+        <tr><td colspan="3"><hr></td></tr>
+        <tr>
+            {% endif %}
+            {% endfor %}
+        </tr>
+    </table>
 {% endblock %}

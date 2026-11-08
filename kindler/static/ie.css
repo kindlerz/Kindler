@@ -1,22 +1,41 @@
 /* Loaded only by IE6/7 via a conditional comment in base.html. */
 
-/* IE6/7 only honour inline-block on elements that are inline by default;
-   "display: inline; zoom: 1" triggers hasLayout and behaves the same. */
-.top-nav form {
-    display: inline;
+/* IE6/7 still wrap the inline-block nav; float its pieces onto one line instead.
+   zoom gives .top-nav hasLayout so it contains the floats and the <hr> stays below. */
+.top-nav {
     zoom: 1;
 }
 
-.book {
-    display: inline;
-    zoom: 1;
+.top-nav a,
+.top-nav form,
+.top-nav .field,
+.top-nav .drop-down,
+.top-nav .btn {
+    float: left;
+}
+
+/* Line the Home link up with the middle of the taller controls. */
+.top-nav a {
+    margin-top: 0.4em;
+}
+
+/* IE6 has no max-width, so a % width overflows the nowrap nav line; fix it in em. */
+.top-nav .field,
+.top-nav .drop-down {
+    width: 14em;
+    margin-right: 0.5em; /* floats drop the space that separated them from the button */
+}
+
+/* Same bottom gap as .field so the <hr> doesn't touch the button. */
+.top-nav .btn {
+    margin-bottom: 1em;
+}
+
+/* IE6 ignores padding on <select>, so it is shorter than the button; centre it. */
+.top-nav .drop-down {
+    margin-top: 0.5em;
 }
 
 .source-url {
     zoom: 1;
-}
-
-/* IE6 has no max-width: use a fixed width that fits 800x600 at 1.2em. */
-* html body {
-    width: 38em;
 }
