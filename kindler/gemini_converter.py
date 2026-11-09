@@ -120,6 +120,8 @@ def is_search_page_clutter(gemini_line):
         or "📚 Enter verbose search" in gemini_line
         or gemini_line.startswith("* gemini://")
         or "↗️ Go to page" in gemini_line
+        or "📦 Archived page" in gemini_line
+        or "Use traditional ranking" in gemini_line
     ):
         return True
     return False
