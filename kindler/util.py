@@ -1,4 +1,6 @@
 import logging
+import socket
+from urllib.parse import urlsplit
 
 import requests
 from flask import Response
@@ -16,6 +18,16 @@ HEADERS = {
 
 
 def is_blob_content(url):
+    mirror_url = redirect_medium(url)
+    if mirror_url != url:
+        try:
+            return _is_blob_content(mirror_url)
+        except requests.RequestException as error:
+            logging.warning(f"Medium mirror failed, fetching {url} directly: {error}")
+    return _is_blob_content(url)
+
+
+def _is_blob_content(url):
     verify_cert = True
     try:
         head_resp = requests.head(
@@ -48,19 +60,22 @@ def is_blob_content(url):
         or content_type.startswith("text/plain")
     ):
         return True, req
-    req = redirect_medium(url, req)
     return False, req
 
 
-def redirect_medium(url, response):
-    if 'content="Medium"' not in response.text:
-        return response
+# Medium blocks datacenter IPs. Its custom domains point at these A records too,
+# which is how we spot a Medium site that is not on medium.com.
+MEDIUM_IPS = {"162.159.152.4", "162.159.153.4"}
+
+
+def redirect_medium(url):
     try:
-        req = requests.get("https://freedium.cfd/" + url, headers=HEADERS, timeout=10)
-        req.raise_for_status()
-        return req
-    except Exception:
-        return response
+        _, _, ips = socket.gethostbyname_ex(urlsplit(url).hostname)
+    except (OSError, TypeError, UnicodeError, ValueError):
+        return url
+    if MEDIUM_IPS.intersection(ips):
+        return "https://freedium-mirror.cfd/" + url
+    return url
 
 
 COVER_CONTENT_TYPES = ("image/jpeg", "image/png", "image/gif", "image/webp")
