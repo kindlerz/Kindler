@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% from "_macros.html" import top_nav %}
-{% block title %}Kindler News - {{category}}{% endblock %}
+{% set options = [('top', 'World Top News'), ('usa-en', 'USA'),
+('germany-en', 'Germany (EN)'), ('germany-de', 'Germany (DE)'),
+('technology', 'Technology'), ('business','Business')] %}
+{% block title %}Kindler News - {{ dict(options).get(category, category) }}{% endblock %}
 {% block content %}
     {% call top_nav(url_for('news.search')) %}
             <select class="drop-down" id="news-category" name="news-category">
-                {% set options = [('top', 'World Top News'), ('usa-en', 'USA'),
-                ('germany-en', 'Germany (EN)'), ('germany-de', 'Germany (DE)'),
-                ('technology', 'Technology'), ('business','Business')] %}
                 {% for value, label in options %}
                     <option value="{{ value }}" {% if category == value %}selected{% endif %}>
                         {{ label }}
