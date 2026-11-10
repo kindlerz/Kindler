@@ -51,7 +51,10 @@ def search():
         google_news = GoogleNews(country=country_lang[0], lang=country_lang[1])
         news = google_news.geo_headlines(country_lang[0])
     return render_template(
-        "result_news.html", category=category, results=filter_entries(news["entries"])
+        "result_news.html",
+        category=category,
+        results=filter_entries(news["entries"]),
+        headline=headline,
     )
 
 
@@ -80,6 +83,15 @@ def is_excluded(entry) -> bool:
     href = entry.get("source", {}).get("href", "")
     host = (urlparse(href).hostname or "").lower()
     return any(host == d or host.endswith("." + d) for d in EXCLUDED_DOMAINS)
+
+
+def headline(entry) -> str:
+    # Google News appends " - <agency>"; the template shows it after the link
+    title = entry.get("title", "")
+    suffix = " - " + entry.get("source", {}).get("title", "")
+    return (
+        title[: -len(suffix)] if suffix != " - " and title.endswith(suffix) else title
+    )
 
 
 def filter_entries(entries):

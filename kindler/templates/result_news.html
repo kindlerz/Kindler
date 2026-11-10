@@ -17,9 +17,10 @@
     {% endcall %}
     {% for result in results %}
         <div class="content">
+            {% set agency = result.get('source', {}).get('title') %}
             <b><a href="{{ url_for('news.readability_page', url=result['link'], q='') }}">
-                {{ result['title'] }}
-            </a></b><br>
+                {{- headline(result) -}}
+            </a></b>{% if agency %} [{{ agency }}]{% endif %}<br>
             <small><time>{{ result['published'] }}</time></small>
         </div>
         <hr>
