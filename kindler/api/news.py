@@ -46,6 +46,9 @@ def search():
         news = google_news.top_news()
     elif category in ("technology", "business"):
         news = google_news.topic_headlines(category)
+    elif "germany-en" == category:
+        # Google's English Germany section is empty; search instead
+        news = google_news.search("Germany", when="1d")
     else:
         country_lang = category.split("-")
         google_news = GoogleNews(country=country_lang[0], lang=country_lang[1])
