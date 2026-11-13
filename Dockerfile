@@ -5,6 +5,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+ARG WORT_VERSION=v0.1.0
+COPY util/download_wort_data.py ./util/
+RUN python util/download_wort_data.py ${WORT_VERSION} /app/kindler/data/wort
 COPY kindler ./kindler
 COPY util/download_ip_lists.py ./util/
 RUN python util/download_ip_lists.py /app/kindler/data

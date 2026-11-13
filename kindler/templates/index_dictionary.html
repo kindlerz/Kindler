@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/solid.min.css') }}">
+{% endblock %}
+{% block title %}Kindler Dictionary{% endblock %}
+{% block body_attrs %} class="home"{% endblock %}
+{% block content %}
+    <h2><i class="fa-solid fa-book-open"></i> Kindler Dictionary</h2>
+    <form action="{{ url_for('dictionary.search') }}" method="get">
+        <input id="input_text" type="text" class="field" name="q" placeholder="Word...">
+        <br>
+        <select class="drop-down" name="lang">
+            <option value="de">German &rarr; German</option>
+            <option value="en">English &rarr; German</option>
+        </select>
+        <br>
+        <input type="submit" value="Look up" class="btn">
+    </form>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import search_nav %}
+{% block title %}Kindler Dictionary - {{ query }}{% endblock %}
+{% block content %}
+    {{ search_nav(url_for('dictionary.search', lang=lang), query) }}
+    <div class="content">
+    {% if entries %}
+        {% if entries | length > 1 %}
+            <p>{{ entries | length }} entries for "{{ query }}":
+            {% for entry in entries %}
+                <a href="#e{{ loop.index }}">{{ entry.shown }}</a>{% if not loop.last %} &middot; {% endif %}
+            {% endfor %}
+            </p>
+        {% endif %}
+        {% for entry in entries %}
+            {% if entries | length > 1 %}<hr>{% endif %}
+            <a name="e{{ loop.index }}"></a>
+            {% if '→' in entry.shown %}<p>{{ entry.shown }}</p>{% endif %}
+            {% for type, text in entry.lines %}
+                {% if type == '@' %}<h3>{{ text }}</h3>
+                {% elif type == '#' %}<p><b>{{ text }}</b></p>
+                {% elif type == ':' %}<h4>{{ text }}</h4>
+                {% elif type == '>' %}<blockquote><i>{{ text }}</i></blockquote>
+                {% else %}<div>{{ text }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    {% else %}
+        <p>No entry for "{{ query }}". Nearby words:</p>
+        <p>
+        {% for word in neighbours %}
+            <a href="{{ url_for('dictionary.search', q=word.split(' → ')[0], lang=lang) }}">{{ word }}</a>{% if not loop.last %} &middot; {% endif %}
+        {% endfor %}
+        </p>
+    {% endif %}
+        <hr>
+        <p><small>Data: {{ data_date }}.
+            <a href="https://de.wiktionary.org/">Wiktionary</a> (CC BY-SA 4.0, via <a href="https://kaikki.org/">kaikki.org</a>),
+            <a href="https://www.openthesaurus.de/">OpenThesaurus</a>.</small></p>
+    </div>
+{% endblock %}
