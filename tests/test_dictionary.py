@@ -138,3 +138,10 @@ def test_json_missing_data_is_503(tmp_path, monkeypatch, client):
     monkeypatch.setattr(dictionary, "DATA_DIR", tmp_path)
     r = client.get("/dictionary/search.json?q=haus")
     assert r.status_code == 503 and "error" in r.get_json()
+
+
+def test_json_retries_without_trailing_dot(data, client):
+    # the add-on keeps a trailing "." so abbreviations (usw., z. B.) match; "Haus." must still find Haus
+    j = client.get("/dictionary/search.json?q=Haus.").get_json()
+    assert j["lang"] == "de" and j["entries"][0]["shown"] == "Haus"
+    assert j["query"] == "Haus" and j["url"] == "/dictionary/de/search?q=Haus"

@@ -134,12 +134,20 @@ def search_json():
     if not all((DATA_DIR / name).exists() for name in INDEXES.values()):
         logging.error("Dictionary data missing in %s", DATA_DIR)
         return jsonify(error="The dictionary data is not installed."), 503
-    lang = "de"
-    entries, neighbours = find_entries(lang, query)
+    # "usw." is a key as typed; "Haus." (end of a sentence) is found as "Haus"
+    queries = [query]
+    if query.endswith(".") and query.rstrip("."):
+        queries.append(query.rstrip("."))
+    for query in queries:
+        for lang in ("de", "en"):
+            entries, neighbours = find_entries(lang, query)
+            if entries:
+                break
+        if entries:
+            break
     if not entries:
-        en_entries, _ = find_entries("en", query)
-        if en_entries:
-            lang, entries, neighbours = "en", en_entries, []
+        lang = "de"
+        _, neighbours = find_entries(lang, query)
     return jsonify(
         query=query,
         lang=lang,
