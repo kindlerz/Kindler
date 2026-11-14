@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, jsonify, render_template, request, url_for
 
 dictionary_bp = Blueprint("dictionary", __name__, url_prefix="/dictionary")
 
@@ -85,6 +85,19 @@ def data_date():
         return f.readline()[1:].strip()
 
 
+def find_entries(lang, query):
+    """(entries, neighbours) for query in lang's index; entries are {"shown", "lines"}."""
+    matches, neighbours = lookup(DATA_DIR / INDEXES[lang], query)
+    # entries spelled exactly as typed first ("Straße" before "Strass"), one per record
+    matches.sort(key=lambda m: m[0].split(" → ")[0] != query)
+    entries, seen = [], set()
+    for shown, offset in matches:
+        if offset not in seen:
+            seen.add(offset)
+            entries.append({"shown": shown, "lines": load_record(offset)})
+    return entries, neighbours
+
+
 @dictionary_bp.route("/")
 def home():
     return render_template("index_dictionary.html")
@@ -101,19 +114,45 @@ def search(lang):
     if not (DATA_DIR / INDEXES[lang]).exists():
         logging.error("Dictionary data missing in %s", DATA_DIR)
         return "The dictionary data is not installed.", 503
-    matches, neighbours = lookup(DATA_DIR / INDEXES[lang], query)
-    # entries spelled exactly as typed first ("Straße" before "Strass"), one per record
-    matches.sort(key=lambda m: m[0].split(" → ")[0] != query)
-    entries, seen = [], set()
-    for shown, offset in matches:
-        if offset not in seen:
-            seen.add(offset)
-            entries.append({"shown": shown, "lines": load_record(offset)})
+    entries, neighbours = find_entries(lang, query)
     return render_template(
         "result_dictionary.html",
         query=query,
         lang=lang,
         entries=entries,
         neighbours=neighbours,
+        data_date=data_date(),
+    )
+
+
+# for the Kindler Dictionary browser add-on: German first, English -> German if no German entry
+@dictionary_bp.route("/search.json")
+def search_json():
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify(error="The q parameter is required."), 400
+    if not all((DATA_DIR / name).exists() for name in INDEXES.values()):
+        logging.error("Dictionary data missing in %s", DATA_DIR)
+        return jsonify(error="The dictionary data is not installed."), 503
+    # "usw." is a key as typed; "Haus." (end of a sentence) is found as "Haus"
+    queries = [query]
+    if query.endswith(".") and query.rstrip("."):
+        queries.append(query.rstrip("."))
+    for query in queries:
+        for lang in ("de", "en"):
+            entries, neighbours = find_entries(lang, query)
+            if entries:
+                break
+        if entries:
+            break
+    if not entries:
+        lang = "de"
+        _, neighbours = find_entries(lang, query)
+    return jsonify(
+        query=query,
+        lang=lang,
+        entries=entries,
+        neighbours=neighbours,
+        url=url_for("dictionary.search", lang=lang, q=query),
         data_date=data_date(),
     )

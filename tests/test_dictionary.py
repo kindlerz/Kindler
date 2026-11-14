@@ -95,3 +95,53 @@ def test_search_escapes_data_and_query(data, client):
 def test_missing_data_returns_503(tmp_path, monkeypatch, client):
     monkeypatch.setattr(dictionary, "DATA_DIR", tmp_path)
     assert client.get("/dictionary/search?q=haus").status_code == 503
+
+
+def test_json_german_hit(data, client):
+    r = client.get("/dictionary/search.json?q=Haus")
+    j = r.get_json()
+    assert r.status_code == 200 and j["lang"] == "de" and j["query"] == "Haus"
+    assert [e["shown"] for e in j["entries"]] == ["Haus", "haus → hausen"]
+    assert j["entries"][0]["lines"][0] == ["@", "Haus"]
+    assert j["neighbours"] == [] and j["url"] == "/dictionary/de/search?q=Haus"
+    assert j["data_date"] == "Wiktionary 2026-11-01, OpenThesaurus 2026-11-09"
+
+
+def test_json_falls_back_to_english(data, client):
+    j = client.get("/dictionary/search.json?q=house").get_json()
+    assert j["lang"] == "en" and j["entries"][0]["shown"] == "house → Haus"
+    assert j["url"] == "/dictionary/en/search?q=house"
+
+
+def test_json_no_match_returns_german_neighbours(data, client):
+    j = client.get("/dictionary/search.json?q=hausa").get_json()
+    assert j["lang"] == "de" and j["entries"] == []
+    assert j["neighbours"] == ["hausen", "Straße"]
+
+
+def test_json_returns_raw_text(data, client):
+    j = client.get("/dictionary/search.json?q=Straße").get_json()
+    assert [" ", "[1] <b>Weg</b>"] in j["entries"][0]["lines"]
+
+
+def test_json_url_encodes_query(data, client):
+    j = client.get("/dictionary/search.json?q=a%26b").get_json()
+    assert j["url"] == "/dictionary/de/search?q=a%26b"
+
+
+def test_json_empty_query_is_400(data, client):
+    r = client.get("/dictionary/search.json?q=%20")
+    assert r.status_code == 400 and "error" in r.get_json()
+
+
+def test_json_missing_data_is_503(tmp_path, monkeypatch, client):
+    monkeypatch.setattr(dictionary, "DATA_DIR", tmp_path)
+    r = client.get("/dictionary/search.json?q=haus")
+    assert r.status_code == 503 and "error" in r.get_json()
+
+
+def test_json_retries_without_trailing_dot(data, client):
+    # the add-on keeps a trailing "." so abbreviations (usw., z. B.) match; "Haus." must still find Haus
+    j = client.get("/dictionary/search.json?q=Haus.").get_json()
+    assert j["lang"] == "de" and j["entries"][0]["shown"] == "Haus"
+    assert j["query"] == "Haus" and j["url"] == "/dictionary/de/search?q=Haus"
