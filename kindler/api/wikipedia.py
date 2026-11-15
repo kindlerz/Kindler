@@ -8,6 +8,7 @@ import textwrap
 from urllib.parse import quote, unquote, urlsplit
 
 from ddgs import DDGS
+from ddgs.exceptions import DDGSException
 from markitdown import MarkItDown
 import io
 import requests
@@ -50,7 +51,11 @@ def search():
     if has_wikipedia_article(query):
         return redirect(url_for("wikipedia.readability_page", q=query))
     else:
-        results = DDGS().text(query, max_results=100, backend=["wikipedia"])
+        try:
+            results = DDGS().text(query, max_results=100, backend=["wikipedia"])
+        except DDGSException:  # raised for no results too, not only for errors
+            logging.warning("Wikipedia search failed for %s", query, exc_info=True)
+            results = []
         return render_template("result_wikipedia.html", query=query, results=results)
 
 
