@@ -128,6 +128,15 @@ code pre {
     overflow: auto;
 }
 
+/* Pygments token classes in Wikipedia code: keywords bold, comments italic */
+.content pre .k, .content pre .kd, .content pre .kn, .content pre .kr, .content pre .kt {
+    font-weight: bold;
+}
+
+.content pre .c, .content pre .c1, .content pre .cm {
+    font-style: italic;
+}
+
 .drop-down {
   width: 50%;
   font-size: 1.2em;

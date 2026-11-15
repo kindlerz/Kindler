@@ -9,6 +9,14 @@ wikipedia = pytest.importorskip("kindler.api.wikipedia")
 ARTICLE_URL = "https://en.wikipedia.org/wiki/Alan_Turing"
 
 
+@pytest.fixture(autouse=True)
+def no_code_blocks(monkeypatch):
+    # keep these tests off the network; the splice is tested in test_wikipedia_code.py
+    monkeypatch.setattr(
+        wikipedia, "wikipedia_code_blocks", lambda title: [[None, 0, []]]
+    )
+
+
 @pytest.fixture
 def client(app):
     from kindler.api.home import home_bp

@@ -39,3 +39,9 @@
 .source-url {
     zoom: 1;
 }
+
+/* IE6 grows a width:auto <pre> to its longest line, which stretches the body and drops
+   its left margin; a set width keeps the body at 90% and the code scrolls inside. */
+.content pre {
+    width: 95%;
+}
