@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import subprocess
@@ -11,6 +12,7 @@ from markitdown import MarkItDown
 import io
 import requests
 import wikipediaapi
+from bs4 import BeautifulSoup
 from flask import redirect, url_for
 from flask import render_template, Blueprint, request, Response, send_file, abort
 from pathvalidate import sanitize_filename
@@ -249,10 +251,101 @@ def get_wikipedia_article(
     if links:
         titles = sorted(links, key=len, reverse=True)
         content = re.sub("|".join(map(re.escape, titles)), link, content)
-    article["content"] = content
+    # after linking, so no anchors are inserted into code
+    article["content"] = add_code_blocks(content, result.title)
     article["title"] = result.title
     article["url"] = result.fullurl
     return article
+
+
+HEADING = re.compile(r"(<h[2-6]>.*?</h[2-6]>\n)")
+
+
+def wikipedia_code_blocks(title):
+    """Code samples of the parsed article, per section in page order:
+    [[heading, paragraphs seen, [(paragraphs before the code, code)]]].
+    TextExtracts drops every <div>, so these never reach the extract; a bare
+    <pre> is not in a div and is already there."""
+    response = requests.get(
+        "https://en.wikipedia.org/w/api.php",
+        params={
+            "action": "parse",
+            "page": title,
+            "prop": "text",
+            "redirects": 1,
+            "disableeditsection": 1,
+            "format": "json",
+            "formatversion": 2,
+        },
+        headers=USER_AGENT_HEADER,
+        timeout=10,
+    )
+    response.raise_for_status()
+    soup = BeautifulSoup(response.json()["parse"]["text"], "lxml")
+    sections = [[None, 0, []]]
+    # shortcut: only top-level blocks; code nested in tables or lists is skipped
+    for child in soup.select_one(".mw-parser-output").find_all(recursive=False):
+        classes = child.get("class") or []
+        if "mw-heading" in classes or re.fullmatch("h[2-6]", child.name):
+            sections.append([child.get_text().strip(), 0, []])
+        elif child.name == "p":
+            sections[-1][1] += 1
+        elif child.name == "blockquote":  # the extract keeps its <p>s too
+            sections[-1][1] += len(child.find_all("p"))
+        elif "mw-highlight" in classes and child.find("pre"):
+            code = code_html(child.find("pre"))
+            sections[-1][2].append((sections[-1][1], code))
+    return sections
+
+
+# Pygments keyword and comment classes, styled in style.css
+CODE_TOKENS = {"k", "kd", "kn", "kr", "kt", "c", "c1", "cm"}
+
+
+def code_html(pre):
+    """Escaped code text; only keyword and comment spans are kept."""
+    parts = []
+    for node in pre.children:
+        text = html.escape(node.get_text())
+        token = (node.get("class") or [""])[0] if node.name == "span" else ""
+        if token in CODE_TOKENS:
+            parts.append(f'<span class="{token}">{text}</span>')
+        else:
+            parts.append(text)
+    return "".join(parts)
+
+
+def insert_code(text, blocks):
+    # last block first, so earlier insert positions stay valid
+    for paragraphs, code in reversed(blocks):
+        pos = 0
+        for _ in range(paragraphs):
+            end = text.find("</p>", pos)
+            pos = len(text) if end == -1 else end + len("</p>")
+        text = f"{text[:pos]}\n<pre>{code}</pre>\n{text[pos:]}"
+    return text
+
+
+def add_code_blocks(content, title):
+    try:
+        sections = wikipedia_code_blocks(title)
+    except (requests.RequestException, ValueError, KeyError, AttributeError):
+        logging.exception("Cannot fetch code blocks of %s", title)
+        return content
+    parts = HEADING.split(content)  # [intro, heading, text, heading, text, ...]
+    parts[0] = insert_code(parts[0], sections[0][2])
+    j = 1
+    for i in range(1, len(parts), 2):
+        heading = html.unescape(re.sub("<[^>]+>", "", parts[i])).strip()
+        # extract headings are a subset of the parsed ones, in the same order
+        k = next(
+            (k for k in range(j, len(sections)) if sections[k][0] == heading), None
+        )
+        if k is None:
+            continue
+        parts[i + 1] = insert_code(parts[i + 1], sections[k][2])
+        j = k + 1
+    return "".join(parts)
 
 
 def has_wikipedia_article(query):
