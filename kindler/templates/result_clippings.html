@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Kindle Highlights{% endblock %}
+{% block content %}
+    <p><a href="{{ url_for('home.home') }}">Home</a> | <a href="{{ url_for('clippings.home') }}">Upload another file</a></p>
+    <hr>
+    {% for title, author, items in books %}
+        {% set book_index = loop.index0 %}
+        <div class="content">
+            <b>{{ title }}</b>{% if author %} ({{ author }}){% endif %}<br>
+            <small class="book-counts">{{ counts(items) }}</small>
+            <p class="download-links">
+                {% for fmt in ['pdf', 'epub', 'mobi', 'azw3'] %}
+                    <a href="{{ url_for('clippings.save_page', id=clippings_id, book=book_index, format=fmt) }}">[.{{ fmt }}]</a>
+                {% endfor %}
+            </p>
+        </div>
+        <hr>
+    {% else %}
+        <p>No highlights found in this file.</p>
+    {% endfor %}
+{% endblock %}

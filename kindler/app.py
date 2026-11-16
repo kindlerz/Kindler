@@ -4,6 +4,7 @@ from flask import Flask, redirect, url_for
 from flask_healthz import healthz
 from logging.config import dictConfig
 
+from kindler.api.clippings import clippings_bp
 from kindler.api.dictionary import dictionary_bp
 from kindler.api.error import error_bp
 from kindler.api.gemini import gemini_bp
@@ -66,6 +67,7 @@ app.register_blueprint(standard_ebooks_bp)
 app.register_blueprint(wikipedia_bp)
 app.register_blueprint(youtube_bp)
 app.register_blueprint(dictionary_bp)
+app.register_blueprint(clippings_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(error_bp)
 app.register_blueprint(healthz, url_prefix="/healthz")

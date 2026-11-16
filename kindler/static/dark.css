@@ -52,4 +52,10 @@
     .error-icon {
         color: #ff8080;
     }
+
+    .field::file-selector-button {
+        background-color: #2d2d2d;
+        border-color: #555;
+        color: #ddd;
+    }
 }

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/solid.min.css') }}">
+{% endblock %}
+{% block title %}Kindle Highlights{% endblock %}
+{% block body_attrs %} class="home"{% endblock %}
+{% block content %}
+    <h2><i class="fa-solid fa-highlighter"></i> Kindle Highlights</h2>
+    <p>Copy <b>documents/My Clippings.txt</b> from your Kindle over USB, then upload it here.</p>
+    <form action="{{ url_for('clippings.upload') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".txt" class="field">
+        <br>
+        <input type="submit" value="Upload" class="btn">
+    </form>
+{% endblock %}

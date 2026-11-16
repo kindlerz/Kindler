@@ -1,4 +1,4 @@
-FROM kasramp/calibre-docker:3.13.7-slim
+FROM kasramp/calibre-docker:3.13.18-slim
 
 WORKDIR /app
 
