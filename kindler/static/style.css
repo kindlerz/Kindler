@@ -107,6 +107,23 @@ form {
     background-color: #ccc;
 }
 
+/* The file picker's own button, made to look like .btn. Kept in its own rule:
+   browsers that don't know the pseudo-element drop the whole rule. */
+.field::file-selector-button {
+    font: inherit;
+    font-weight: bold;
+    padding: 0.3em 0.8em;
+    margin-right: 0.6em;
+    cursor: pointer;
+    background-color: #ddd;
+    border: 1px solid #999;
+    border-radius: 0.3em;
+}
+
+.book-counts {
+    font-size: 0.75em;
+}
+
 hr {
     border: none;
     border-top: 1px solid #ccc;

@@ -22,6 +22,8 @@ def error():
 
 def map_status_code_to_error(status_code, reason=None):
     match status_code:
+        case "400" if reason == "clippings":
+            return "This doesn't look like a Kindle My Clippings.txt file (400)"
         case "400":
             return "Please provide a URL to clean (400)"
         case "401":
@@ -30,8 +32,12 @@ def map_status_code_to_error(status_code, reason=None):
             return "Datacenter or VPN connection detected. Please turn off your VPN or use a regular home connection (403)"
         case "403":
             return "Website denied access (403)"
+        case "404" if reason == "expired":
+            return "This upload has expired, please upload the file again (404)"
         case "404":
             return "Page not found (404)"
+        case "413":
+            return "File too large, the limit is 5 MB (413)"
         case "429":
             return f"Daily limit of {DAILY_QUOTA} conversions reached. Please try again later (429)"
         case "500":

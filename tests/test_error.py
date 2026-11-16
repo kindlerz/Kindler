@@ -54,3 +54,17 @@ def test_reason_network_ignored_for_non_403(client):
 
 def test_unknown_code_200(client):
     assert client.get("/error?status_code=418").status_code == 200
+
+
+@pytest.mark.parametrize(
+    "query,text",
+    [
+        ("status_code=400&reason=clippings", b"My Clippings.txt"),
+        ("status_code=404&reason=expired", b"upload has expired"),
+        ("status_code=413", b"the limit is 5 MB"),
+    ],
+)
+def test_clippings_messages(client, query, text):
+    r = client.get(f"/error?{query}")
+    assert r.status_code == 200
+    assert text in r.data
