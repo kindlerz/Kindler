@@ -255,3 +255,57 @@ def test_web_save_page_guards_only_ebook_formats(app, monkeypatch, fmt, expected
             with pytest.raises(RuntimeError):
                 web.save_page()
     assert len(calls) == expected_calls
+
+
+# ---- highlights_guard ----
+
+
+def call_highlights_guard(app, kind="uploads", ip=IP):
+    with app.test_request_context("/", headers={"CF-Connecting-IP": ip}):
+        return abuse.highlights_guard(kind)
+
+
+@pytest.mark.parametrize("kind", ["uploads", "downloads"])
+def test_highlights_five_pass_sixth_rejected_429_without_block(app, fake_redis, kind):
+    for _ in range(abuse.HIGHLIGHTS_DAILY_LIMIT):
+        assert call_highlights_guard(app, kind) is None
+    resp = call_highlights_guard(app, kind)
+    assert "status_code=429" in location(resp)
+    assert f"reason={kind}" in location(resp)
+    assert not fake_redis.exists(f"block:{IP}")
+    assert call_guard(app) is None  # other conversions still allowed
+
+
+def test_highlights_uploads_and_downloads_counted_separately(app, fake_redis):
+    for _ in range(abuse.HIGHLIGHTS_DAILY_LIMIT):
+        assert call_highlights_guard(app, "uploads") is None
+    assert call_highlights_guard(app, "downloads") is None
+
+
+def test_highlights_separate_from_conversion_quota(app, fake_redis):
+    for _ in range(abuse.DAILY_QUOTA):
+        assert call_guard(app) is None
+    assert call_highlights_guard(app) is None
+
+
+def test_highlights_datacenter_gets_403_network(app, fake_redis, monkeypatch):
+    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
+    resp = call_highlights_guard(app)
+    assert "status_code=403" in location(resp)
+    assert "reason=network" in location(resp)
+
+
+def test_highlights_redis_error_fails_open(app, fake_redis, monkeypatch):
+    def boom(*a, **k):
+        raise ConnectionError("down")
+
+    monkeypatch.setattr(fake_redis, "pipeline", boom)
+    assert call_highlights_guard(app) is None
+
+
+@pytest.mark.parametrize("kind", ["uploads", "downloads"])
+def test_highlights_limit_error_page(app, kind):
+    resp = app.test_client().get(f"/error?status_code=429&reason={kind}")
+    assert resp.status_code == 429
+    assert resp.headers["Retry-After"] == str(abuse.HIGHLIGHTS_TTL_SECONDS)
+    assert f"Daily limit of 5 {kind} reached".encode() in resp.data

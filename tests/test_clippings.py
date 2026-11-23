@@ -222,7 +222,7 @@ def client(app, monkeypatch):
     cache.init_app(app)
     app.register_blueprint(home_bp)  # result page links back to Home
     app.register_blueprint(clippings_bp)
-    monkeypatch.setattr(clippings, "guard", lambda url=None: None)
+    monkeypatch.setattr(clippings, "highlights_guard", lambda kind: None)
     return app.test_client()
 
 
@@ -307,13 +307,17 @@ def test_save_page_unknown_book(client):
     assert r.status_code == 302 and "status_code=404" in r.location
 
 
-def test_save_page_respects_abuse_guard(client, monkeypatch):
+def test_save_page_respects_highlights_guard(client, monkeypatch):
     from flask import redirect
 
-    monkeypatch.setattr(
-        clippings, "guard", lambda url=None: redirect("/error?status_code=429")
-    )
     clippings_id = uploaded_id(client)
+    monkeypatch.setattr(
+        clippings,
+        "highlights_guard",
+        lambda kind: (
+            redirect("/error?status_code=429") if kind == "downloads" else None
+        ),
+    )
     r = client.get(f"/clippings/save_page?id={clippings_id}&book=0&format=epub")
     assert r.status_code == 302 and "status_code=429" in r.location
 
@@ -350,3 +354,15 @@ def test_crafted_file_parses_in_linear_time():
     started = time.monotonic()
     parse_clippings(text)
     assert time.monotonic() - started < 3
+
+
+def test_upload_respects_highlights_guard(client, monkeypatch):
+    from flask import redirect
+
+    monkeypatch.setattr(
+        clippings,
+        "highlights_guard",
+        lambda kind: redirect("/error?status_code=429") if kind == "uploads" else None,
+    )
+    r = upload(client, ENGLISH.encode())
+    assert r.status_code == 302 and "status_code=429" in r.location
