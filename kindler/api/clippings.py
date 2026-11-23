@@ -23,7 +23,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from markupsafe import escape
 from pathvalidate import sanitize_filename
 
-from kindler.abuse import guard, upload_guard
+from kindler.abuse import highlights_guard
 from kindler.cache import cache
 
 clippings_bp = Blueprint("clippings", __name__, url_prefix="/clippings")
@@ -336,7 +336,7 @@ def not_clippings():
 @clippings_bp.route("/upload", methods=["POST"])
 def upload():
     # before the body is read, so failed uploads count too
-    blocked = upload_guard()
+    blocked = highlights_guard("uploads")
     if blocked:
         return blocked
     # reject big bodies before Flask parses them; the extra 16 KB is form overhead
@@ -384,7 +384,7 @@ def save_page():
     books = parse_clippings(text)
     if not 0 <= book < len(books):
         return redirect(url_for("error.error", status_code=404))
-    blocked = guard()
+    blocked = highlights_guard("downloads")
     if blocked:
         return blocked
     title, author, items = books[book]

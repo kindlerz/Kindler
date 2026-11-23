@@ -12,8 +12,8 @@ from kindler.cache import REDIS_URL
 
 DAILY_QUOTA = 10
 BLOCK_TTL_SECONDS = 48 * 60 * 60
-DAILY_UPLOADS = 5
-UPLOAD_TTL_SECONDS = 24 * 60 * 60
+HIGHLIGHTS_DAILY_LIMIT = 5
+HIGHLIGHTS_TTL_SECONDS = 24 * 60 * 60
 
 _redis = redis.Redis.from_url(REDIS_URL, socket_connect_timeout=1, socket_timeout=1)
 
@@ -123,24 +123,24 @@ def guard(url=None):
     return None
 
 
-def upload_guard():
-    """Like guard() for Highlights uploads: a daily counter, no 48h block."""
+def highlights_guard(kind):
+    """Like guard() for Highlights "uploads" or "downloads": a daily counter, no 48h block."""
     try:
         key = _client_key()
         if key is None:
-            logging.warning("No valid client IP found, allowing upload")
+            logging.warning("No valid client IP found, allowing %s", kind)
             return None
         if is_datacenter_or_vpn(key):
             return _reject(None, key, reason="network")
-        upload_key = f"upload:{key}:{datetime.now(timezone.utc):%Y-%m-%d}"
+        count_key = f"{kind}:{key}:{datetime.now(timezone.utc):%Y-%m-%d}"
         pipe = _redis.pipeline(transaction=True)
-        pipe.incr(upload_key)
-        pipe.expire(upload_key, UPLOAD_TTL_SECONDS)
-        if pipe.execute()[0] > DAILY_UPLOADS:
-            logging.warning("Rejecting upload for %s (quota)", key)
-            return redirect(url_for("error.error", status_code=429, reason="uploads"))
+        pipe.incr(count_key)
+        pipe.expire(count_key, HIGHLIGHTS_TTL_SECONDS)
+        if pipe.execute()[0] > HIGHLIGHTS_DAILY_LIMIT:
+            logging.warning("Rejecting %s for %s (quota)", kind, key)
+            return redirect(url_for("error.error", status_code=429, reason=kind))
     except Exception as e:
-        logging.error(f"Upload guard failed, allowing request: {e}")
+        logging.error(f"Highlights guard failed, allowing request: {e}")
     return None
 
 

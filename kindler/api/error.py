@@ -3,8 +3,8 @@ from flask import render_template, Blueprint, request
 from kindler.abuse import (
     BLOCK_TTL_SECONDS,
     DAILY_QUOTA,
-    DAILY_UPLOADS,
-    UPLOAD_TTL_SECONDS,
+    HIGHLIGHTS_DAILY_LIMIT,
+    HIGHLIGHTS_TTL_SECONDS,
 )
 
 error_bp = Blueprint("error", __name__, url_prefix="/error")
@@ -18,7 +18,11 @@ def error():
     message = map_status_code_to_error(status_code, reason)
     html = render_template("error.html", message=message, url=url)
     if status_code == "429" or (status_code == "403" and reason == "network"):
-        retry_after = UPLOAD_TTL_SECONDS if reason == "uploads" else BLOCK_TTL_SECONDS
+        retry_after = (
+            HIGHLIGHTS_TTL_SECONDS
+            if reason in ("uploads", "downloads")
+            else BLOCK_TTL_SECONDS
+        )
         headers = {"Retry-After": str(retry_after)} if status_code == "429" else {}
         return html, int(status_code), headers
     return html
@@ -42,8 +46,8 @@ def map_status_code_to_error(status_code, reason=None):
             return "Page not found (404)"
         case "413":
             return "File too large, the limit is 5 MB (413)"
-        case "429" if reason == "uploads":
-            return f"Daily limit of {DAILY_UPLOADS} uploads reached. Please try again tomorrow (429)"
+        case "429" if reason in ("uploads", "downloads"):
+            return f"Daily limit of {HIGHLIGHTS_DAILY_LIMIT} {reason} reached. Please try again tomorrow (429)"
         case "429":
             return f"Daily limit of {DAILY_QUOTA} conversions reached. Please try again later (429)"
         case "500":
