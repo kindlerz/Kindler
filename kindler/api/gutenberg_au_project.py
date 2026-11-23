@@ -1,3 +1,4 @@
+import io
 import logging
 import os
 import shutil
@@ -163,27 +164,18 @@ def save_page():
                 cmd,
                 check=True,
             )
-            download_file_name = sanitize_filename(f"{article['title']}.{save_format}")
-            response = send_file(
-                output_file, as_attachment=True, download_name=download_file_name
-            )
-
-            @response.call_on_close
-            def cleanup():
-                for f in [input_html_file, output_file]:
-                    try:
-                        os.remove(f)
-                        logging.info(f"File {f} deleted")
-                    except OSError:
-                        pass
-                shutil.rmtree(temp_dir, ignore_errors=True)
-
-            return response
+            with open(output_file, "rb") as f:
+                data = f.read()
         except subprocess.CalledProcessError as e:
+            abort(500, f"Conversion failed: {e}")
+        finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
             if os.path.exists(output_file):
                 os.remove(output_file)
-            abort(500, f"Conversion failed: {e}")
+        download_file_name = sanitize_filename(f"{article['title']}.{save_format}")
+        return send_file(
+            io.BytesIO(data), as_attachment=True, download_name=download_file_name
+        )
 
 
 def get_python_readability_result(html_content, book_details, base_url, img_dir=None):
