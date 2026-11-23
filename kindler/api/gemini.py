@@ -141,26 +141,18 @@ def save_page():
                 ],
                 check=True,
             )
-            download_file_name = sanitize_filename(f"{article['title']}.{save_format}")
-            response = send_file(
-                output_file, as_attachment=True, download_name=download_file_name
-            )
-
-            @response.call_on_close
-            def cleanup():
-                for f in [input_html_file, output_file]:
-                    try:
-                        os.remove(f)
-                        logging.info(f"File {f} deleted")
-                    except OSError:
-                        pass
-
-            return response
+            with open(output_file, "rb") as f:
+                data = f.read()
         except subprocess.CalledProcessError as e:
+            abort(500, f"Conversion failed: {e}")
+        finally:
             os.remove(input_html_file)
             if os.path.exists(output_file):
                 os.remove(output_file)
-            abort(500, f"Conversion failed: {e}")
+        download_file_name = sanitize_filename(f"{article['title']}.{save_format}")
+        return send_file(
+            io.BytesIO(data), as_attachment=True, download_name=download_file_name
+        )
 
 
 def get_gemini_content(url):
