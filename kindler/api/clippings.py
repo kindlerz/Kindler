@@ -23,7 +23,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from markupsafe import escape
 from pathvalidate import sanitize_filename
 
-from kindler.abuse import guard
+from kindler.abuse import guard, upload_guard
 from kindler.cache import cache
 
 clippings_bp = Blueprint("clippings", __name__, url_prefix="/clippings")
@@ -335,6 +335,10 @@ def not_clippings():
 
 @clippings_bp.route("/upload", methods=["POST"])
 def upload():
+    # before the body is read, so failed uploads count too
+    blocked = upload_guard()
+    if blocked:
+        return blocked
     # reject big bodies before Flask parses them; the extra 16 KB is form overhead
     request.max_content_length = MAX_UPLOAD + 16 * 1024
     try:

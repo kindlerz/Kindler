@@ -223,6 +223,7 @@ def client(app, monkeypatch):
     app.register_blueprint(home_bp)  # result page links back to Home
     app.register_blueprint(clippings_bp)
     monkeypatch.setattr(clippings, "guard", lambda url=None: None)
+    monkeypatch.setattr(clippings, "upload_guard", lambda: None)
     return app.test_client()
 
 
@@ -350,3 +351,13 @@ def test_crafted_file_parses_in_linear_time():
     started = time.monotonic()
     parse_clippings(text)
     assert time.monotonic() - started < 3
+
+
+def test_upload_respects_upload_guard(client, monkeypatch):
+    from flask import redirect
+
+    monkeypatch.setattr(
+        clippings, "upload_guard", lambda: redirect("/error?status_code=429")
+    )
+    r = upload(client, ENGLISH.encode())
+    assert r.status_code == 302 and "status_code=429" in r.location

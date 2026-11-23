@@ -255,3 +255,49 @@ def test_web_save_page_guards_only_ebook_formats(app, monkeypatch, fmt, expected
             with pytest.raises(RuntimeError):
                 web.save_page()
     assert len(calls) == expected_calls
+
+
+# ---- upload_guard ----
+
+
+def call_upload_guard(app, ip=IP):
+    with app.test_request_context("/", headers={"CF-Connecting-IP": ip}):
+        return abuse.upload_guard()
+
+
+def test_upload_five_pass_sixth_rejected_429_without_block(app, fake_redis):
+    for _ in range(abuse.DAILY_UPLOADS):
+        assert call_upload_guard(app) is None
+    resp = call_upload_guard(app)
+    assert "status_code=429" in location(resp)
+    assert "reason=uploads" in location(resp)
+    assert not fake_redis.exists(f"block:{IP}")
+    assert call_guard(app) is None  # conversions still allowed
+
+
+def test_upload_counter_separate_from_conversion_quota(app, fake_redis):
+    for _ in range(abuse.DAILY_QUOTA):
+        assert call_guard(app) is None
+    assert call_upload_guard(app) is None
+
+
+def test_upload_datacenter_gets_403_network(app, fake_redis, monkeypatch):
+    monkeypatch.setattr(abuse, "is_datacenter_or_vpn", lambda ip: True)
+    resp = call_upload_guard(app)
+    assert "status_code=403" in location(resp)
+    assert "reason=network" in location(resp)
+
+
+def test_upload_redis_error_fails_open(app, fake_redis, monkeypatch):
+    def boom(*a, **k):
+        raise ConnectionError("down")
+
+    monkeypatch.setattr(fake_redis, "pipeline", boom)
+    assert call_upload_guard(app) is None
+
+
+def test_upload_limit_error_page(app):
+    resp = app.test_client().get("/error?status_code=429&reason=uploads")
+    assert resp.status_code == 429
+    assert resp.headers["Retry-After"] == str(abuse.UPLOAD_TTL_SECONDS)
+    assert b"Daily limit of 5 uploads reached" in resp.data
